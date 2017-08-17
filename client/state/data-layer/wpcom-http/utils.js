@@ -1,17 +1,16 @@
+/** @format **/
 /**
  * External dependencies
- *
- * @format
  */
-
+import deterministicStringify from 'json-stable-stringify';
 import schemaValidator from 'is-my-json-valid';
-import { get, identity, noop } from 'lodash';
+import { get, identity, merge, noop, uniqueId } from 'lodash';
 
 /**
  * Internal dependencies
  */
+import config from 'config';
 import warn from 'lib/warn';
-
 /**
  * Returns response data from an HTTP request success action if available
  *
@@ -96,13 +95,124 @@ export const makeParser = ( schema, schemaOptions = {}, transformer = identity )
 	return data => transform( validate( data ) );
 };
 
+const getRequestStatus = action => {
+	if ( getError( action ) ) {
+		return 'failure';
+	}
+
+	if ( getData( action ) ) {
+		return 'success';
+	}
+
+	return 'pending';
+};
+
+export const getActionKey = fullAction => {
+	const { meta, ...action } = fullAction; // eslint-disable-line no-unused-vars
+
+	return deterministicStringify( action );
+};
+
+/**
+ * Tracks the state of network activity for a given request type
+ *
+ * When we issue _REQUEST type actions they usually create some
+ * associated network activity by means of an HTTP request.
+ * We may want to know what the status of those requests are, if
+ * they have completed or if they have failed.
+ *
+ * This tracker stores the meta data for those requests which
+ * can then be independently polled by React components which
+ * need to know about those data requests.
+ *
+ * Note that this is meta data about remote data requests and
+ * _not_ about network activity, which is why this is code is
+ * here operating on the _REQUEST actions and not in the HTTP
+ * pipeline as a processor on HTTP_REQUEST actions.
+ *
+ * @param {Map} requests stores request meta data; must be Map-like with set/get
+ * @param {Map} requestIds tracks requests by unique ids
+ * @returns {Function} middleware function to track requests
+ */
+export const trackRequests = ( requests, requestIds ) => next => ( store, action ) => {
+	// progress events don't affect
+	// any tracking meta at the moment
+	if ( getProgress( action ) ) {
+		return next( store, action );
+	}
+
+	const actionKey = getActionKey( action );
+	const status = getRequestStatus( action );
+	const meta = requests.get( actionKey ) || {};
+	const requestId = get( action, 'meta.dataLayer.requestId' ) || uniqueId( 'data-request-' );
+
+	const nextMeta = Object.assign(
+		{},
+		meta,
+		{
+			requestId,
+			status,
+		},
+		status !== 'pending' && { lastUpdated: Date.now() }
+	);
+
+	// update the meta
+	requests.set( actionKey, nextMeta );
+
+	// update the request mapping
+	// the returning action could be
+	// different than the first one
+	// which originated the request
+	if ( 'pending' === status ) {
+		requestIds.set( requestId, actionKey );
+	} else {
+		const firstKey = requestIds.get( requestId );
+
+		if ( firstKey && firstKey !== actionKey ) {
+			requests.set( firstKey, nextMeta );
+		}
+	}
+
+	next( store, merge( action, { meta: { dataLayer: { requestId } } } ) );
+};
+
+/** @type Map stores meta data about data request **/
+const requestsMeta = new Map();
+const requestsIds = new Map();
+
+if ( 'development' === config( 'env_id' ) && typeof window === 'object' ) {
+	window.dataRequests = requestsMeta;
+	window.dataRequestIds = requestsIds;
+}
+
+/**
+ * Builds a function to return request meta (used for testing)
+ *
+ * @see getRequestMeta
+ *
+ * @param {Map} requests stores request meta data; must be Map-like with set/get
+ * @returns {Function} actually gets request meta given an action
+ */
+export const requestMetaGetter = requests => action => requests.get( getActionKey( action ) );
+
+/**
+ * Returns known information about a given data request
+ *
+ * @type {Function}
+ * @param {Object} action data _REQUEST Redux action
+ * @returns {Object} meta information about a data request
+ */
+export const getRequestMeta = requestMetaGetter( requestsMeta );
+
 /**
  * @type Object default dispatchRequest options
  * @property {Function} fromApi validates and transforms API response data
+ * @property {Function} middleware chain of functions to process before dispatch
  * @property {Function} onProgress called on progress events
  */
 const defaultOptions = {
 	fromApi: identity,
+	middleware: trackRequests( requestsMeta, requestsIds ),
 	onProgress: noop,
 };
 
@@ -137,34 +247,43 @@ const defaultOptions = {
  * @param {Object} options configures additional dispatching behaviors
  + @param {Function} [options.fromApi] maps between API data and Calypso data
  + @param {Function} [options.onProgress] called on progress events when uploading
+ * @param {Function} [options.middleware] runs before the dispatch itself
+ * @param {Function} [options.onProgress] called on progress events when uploading
  * @returns {?*} please ignore return values, they are undefined
  */
-export const dispatchRequest = ( initiator, onSuccess, onError, options = {} ) => (
-	store,
-	action
-) => {
-	const { fromApi, onProgress } = { ...defaultOptions, ...options };
+export const dispatchRequest = ( initiator, onSuccess, onError, options = {} ) => {
+	const { fromApi, middleware, onProgress } = { ...defaultOptions, ...options };
 
-	const error = getError( action );
-	if ( undefined !== error ) {
-		return onError( store, action, error );
-	}
-
-	const data = getData( action );
-	if ( undefined !== data ) {
-		try {
-			return onSuccess( store, action, fromApi( data ) );
-		} catch ( err ) {
-			return onError( store, action, err );
+	// this is an odd way of injecting middleware
+	// normally we'd wrap the entire function from
+	// the outside and use dependency injection
+	// for providing the middleware
+	// in this case we want to preserve the function
+	// signature of `dispatchRequest` while allowing
+	// for testing without middleware so we're just
+	// going to go inside-out here
+	return middleware( ( store, action ) => {
+		const error = getError( action );
+		if ( undefined !== error ) {
+			return onError( store, action, error );
 		}
-	}
 
-	const progress = getProgress( action );
-	if ( undefined !== progress ) {
-		return onProgress( store, action, progress );
-	}
+		const data = getData( action );
+		if ( undefined !== data ) {
+			try {
+				return onSuccess( store, action, fromApi( data ) );
+			} catch ( err ) {
+				return onError( store, action, err );
+			}
+		}
 
-	return initiator( store, action );
+		const progress = getProgress( action );
+		if ( undefined !== progress ) {
+			return onProgress( store, action, progress );
+		}
+
+		return initiator( store, action );
+	} );
 };
 
 /**
