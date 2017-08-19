@@ -1,7 +1,6 @@
+/** @format */
 /**
  * External dependencies
- *
- * @format
  */
 
 import {
@@ -27,16 +26,12 @@ import i18n from 'i18n-calypso';
  */
 import config from 'config';
 import { isHttps, withoutHttp, addQueryArgs, urlToSlug } from 'lib/url';
-
-/**
- * Internal dependencies
- */
 import createSelector from 'lib/create-selector';
 import { fromApi as seoTitleFromApi } from 'components/seo/meta-title-editor/mappings';
 import versionCompare from 'lib/version-compare';
 import { getCustomizerFocus } from 'my-sites/customize/panels';
 import { getSiteComputedAttributes } from './utils';
-import { isSiteUpgradeable, getSiteOptions } from 'state/selectors';
+import { isSiteUpgradeable, getSiteOptions, getSitesItems } from 'state/selectors';
 
 /**
  * Returns a raw site object by its ID.
@@ -46,7 +41,7 @@ import { isSiteUpgradeable, getSiteOptions } from 'state/selectors';
  * @return {?Object}        Site object
  */
 export const getRawSite = ( state, siteId ) => {
-	return state.sites.items[ siteId ] || null;
+	return get( state, [ 'sites', 'items', siteId ], null );
 };
 
 /**
@@ -59,12 +54,12 @@ export const getRawSite = ( state, siteId ) => {
 export const getSiteBySlug = createSelector(
 	( state, siteSlug ) =>
 		find(
-			state.sites.items,
+			getSitesItems( state ),
 			( item, siteId ) =>
 				// find always passes the siteId as a string. We need it as a integer
 				getSiteSlug( state, parseInt( siteId, 10 ) ) === siteSlug
 		) || null,
-	state => state.sites.items
+	getSitesItems
 );
 
 /**
@@ -121,20 +116,24 @@ export function getJetpackComputedAttributes( state, siteId ) {
  * @param  {Object}   state Global state tree
  * @return {Number[]}       WordPress.com site IDs with collisions
  */
-export const getSiteCollisions = createSelector( state => {
-	return map(
-		filter( state.sites.items, wpcomSite => {
-			const wpcomSiteUrlSansProtocol = withoutHttp( wpcomSite.URL );
-			return (
-				! wpcomSite.jetpack &&
-				some( state.sites.items, jetpackSite => {
-					return jetpackSite.jetpack && wpcomSiteUrlSansProtocol === withoutHttp( jetpackSite.URL );
-				} )
-			);
-		} ),
-		'ID'
-	);
-}, state => state.sites.items );
+export const getSiteCollisions = createSelector(
+	state =>
+		map(
+			filter( getSitesItems( state ), wpcomSite => {
+				const wpcomSiteUrlSansProtocol = withoutHttp( wpcomSite.URL );
+				return (
+					! wpcomSite.jetpack &&
+					some(
+						getSitesItems( state ),
+						jetpackSite =>
+							jetpackSite.jetpack && wpcomSiteUrlSansProtocol === withoutHttp( jetpackSite.URL )
+					)
+				);
+			} ),
+			'ID'
+		),
+	getSitesItems
+);
 
 /**
  * Returns true if a collision exists for the specified WordPress.com site ID.

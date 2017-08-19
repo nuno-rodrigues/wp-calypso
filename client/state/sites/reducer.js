@@ -1,9 +1,7 @@
+/** @format */
 /**
  * External dependencies
- *
- * @format
  */
-
 import { pick, omit, merge, get, includes, reduce, isEqual, stubFalse, stubTrue } from 'lodash';
 
 /**
@@ -57,9 +55,12 @@ const VALID_SITE_KEYS = Object.keys( sitesSchema.patternProperties[ '^\\d+$' ].p
  * @param  {Object} action Action payload
  * @return {Object}        Updated state
  */
-export function items( state = {}, action ) {
+export function items( state = null, action ) {
 	switch ( action.type ) {
 		case WORDADS_SITE_APPROVE_REQUEST_SUCCESS:
+			if ( state === null ) {
+				return state;
+			}
 			const prevSite = state[ action.siteId ];
 			if ( prevSite ) {
 				return Object.assign( {}, state, {
@@ -74,9 +75,12 @@ export function items( state = {}, action ) {
 			// Normalize incoming site(s) to array
 			const sites = action.site ? [ action.site ] : action.sites;
 
+			if ( SITES_UPDATE === action.type && state === null ) {
+				return state;
+			}
 			// SITES_RECEIVE occurs when we receive the entire set of user
 			// sites (replace existing state). Otherwise merge into state.
-			const initialNextState = SITES_RECEIVE === action.type ? {} : state;
+			const initialNextState = SITES_RECEIVE === action.type || state === null ? {} : state;
 
 			return reduce(
 				sites,
@@ -108,12 +112,13 @@ export function items( state = {}, action ) {
 			);
 
 		case SITE_DELETE_RECEIVE:
-			return omit( state, action.siteId );
-
 		case JETPACK_DISCONNECT_RECEIVE:
-			return omit( state, action.siteId );
+			return state !== null ? omit( state, action.siteId ) : state;
 
 		case THEME_ACTIVATE_SUCCESS: {
+			if ( state === null ) {
+				return state;
+			}
 			const { siteId, themeStylesheet } = action;
 			const site = state[ siteId ];
 			if ( ! site ) {
@@ -132,6 +137,9 @@ export function items( state = {}, action ) {
 
 		case SITE_SETTINGS_UPDATE:
 		case SITE_SETTINGS_RECEIVE: {
+			if ( state === null ) {
+				return state;
+			}
 			const { siteId, settings } = action;
 			const site = state[ siteId ];
 
@@ -203,6 +211,9 @@ export function items( state = {}, action ) {
 		}
 
 		case MEDIA_DELETE: {
+			if ( state === null ) {
+				return state;
+			}
 			const { siteId, mediaIds } = action;
 			const siteIconId = get( state[ siteId ], 'icon.media_id' );
 			if ( siteIconId && includes( mediaIds, siteIconId ) ) {
