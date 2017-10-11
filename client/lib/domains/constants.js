@@ -66,7 +66,7 @@ const domainProductSlugs = {
 	TRANSFER_IN: 'domain_transfer',
 };
 
-export default {
+const exported = {
 	dnsTemplates,
 	domainAvailability,
 	domainProductSlugs,
@@ -74,3 +74,6 @@ export default {
 	transferStatus,
 	type,
 };
+
+export default exported;
+export { dnsTemplates, domainAvailability, registrar, type };

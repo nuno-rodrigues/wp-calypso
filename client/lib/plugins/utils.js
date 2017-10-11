@@ -224,4 +224,5 @@ const PluginUtils = {
 	},
 };
 
+export const sanitizeSectionContent = PluginUtils.sanitizeSectionContent;
 export default PluginUtils;
