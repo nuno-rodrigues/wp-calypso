@@ -98,13 +98,24 @@ export class DomainDetailsForm extends PureComponent {
 	}
 
 	componentWillMount() {
+		// eslint-disable-next-line
+		console.log( 'componentWillMount() this.props.contactDetails ', this.props.contactDetails );
+
+		const initialFields = pick( this.props.contactDetails, this.fieldNames );
 		this.formStateController = formState.Controller( {
-			fieldNames: this.fieldNames,
-			loadFunction: this.loadFormStateFromRedux,
+			//fieldNames: this.fieldNames,
+			initialFields,
+			//loadFunction: this.loadFormStateFromRedux,
 			sanitizerFunction: this.sanitize,
 			validatorFunction: this.validate,
 			onNewState: this.setFormState,
 			onError: this.handleFormControllerError,
+		} );
+
+		// eslint-disable-next-line
+		console.log( 'componentWillMount() this.state ', this.state );
+		this.setState( {
+			form: this.formStateController.getInitialState(),
 		} );
 	}
 
@@ -123,35 +134,10 @@ export class DomainDetailsForm extends PureComponent {
 		}
 	}
 
-	loadFormStateFromRedux = fn => {
-		// only load the properties relevant to the main form fields
-		fn( null, pick( this.props.contactDetails, this.fieldNames ) );
-	};
-
-	sanitize = ( fieldValues, onComplete ) => {
-		const sanitizedFieldValues = Object.assign( {}, fieldValues );
-		this.fieldNames.forEach( fieldName => {
-			if ( typeof fieldValues[ fieldName ] === 'string' ) {
-				// TODO: Deep
-				sanitizedFieldValues[ fieldName ] = deburr( fieldValues[ fieldName ].trim() );
-				if ( fieldName === 'postalCode' ) {
-					sanitizedFieldValues[ fieldName ] = sanitizedFieldValues[ fieldName ].toUpperCase();
-				}
-			}
-		} );
-
-		onComplete( sanitizedFieldValues );
-	};
-
-	hasAnotherStep() {
-		return this.state.currentStep !== last( this.state.steps );
-	}
-
-	switchToNextStep() {
-		const newStep = this.state.steps[ indexOf( this.state.steps, this.state.currentStep ) + 1 ];
-		debug( 'Switching to step: ' + newStep );
-		this.setState( { currentStep: newStep } );
-	}
+	// loadFormStateFromRedux = fn => {
+	// 	// only load the properties relevant to the main form fields
+	// 	fn( null, pick( this.props.contactDetails, this.fieldNames ) );
+	// };
 
 	validate = ( fieldValues, onComplete ) => {
 		if ( this.needsOnlyGoogleAppsDetails() ) {
@@ -171,12 +157,20 @@ export class DomainDetailsForm extends PureComponent {
 		);
 	};
 
-	generateValidationHandler( onComplete ) {
-		return ( error, data ) => {
-			const messages = ( data && data.messages ) || {};
-			onComplete( error, messages );
-		};
-	}
+	sanitize = ( fieldValues, onComplete ) => {
+		const sanitizedFieldValues = Object.assign( {}, fieldValues );
+		this.fieldNames.forEach( fieldName => {
+			if ( typeof fieldValues[ fieldName ] === 'string' ) {
+				// TODO: Deep
+				sanitizedFieldValues[ fieldName ] = deburr( fieldValues[ fieldName ].trim() );
+				if ( fieldName === 'postalCode' ) {
+					sanitizedFieldValues[ fieldName ] = sanitizedFieldValues[ fieldName ].toUpperCase();
+				}
+			}
+		} );
+
+		onComplete( sanitizedFieldValues );
+	};
 
 	setFormState = form => {
 		if ( ! this.needsFax() ) {
@@ -185,6 +179,23 @@ export class DomainDetailsForm extends PureComponent {
 
 		this.setState( { form } );
 	};
+
+	hasAnotherStep() {
+		return this.state.currentStep !== last( this.state.steps );
+	}
+
+	switchToNextStep() {
+		const newStep = this.state.steps[ indexOf( this.state.steps, this.state.currentStep ) + 1 ];
+		debug( 'Switching to step: ' + newStep );
+		this.setState( { currentStep: newStep } );
+	}
+
+	generateValidationHandler( onComplete ) {
+		return ( error, data ) => {
+			const messages = ( data && data.messages ) || {};
+			onComplete( error, messages );
+		};
+	}
 
 	needsOnlyGoogleAppsDetails() {
 		return (
@@ -240,6 +251,8 @@ export class DomainDetailsForm extends PureComponent {
 		};
 	}
 
+	// if `domains/cctlds` is `true` in the config,
+	// for every domain that requires additional steps, add it to this.state.steps
 	getRequiredExtraSteps() {
 		if ( ! config.isEnabled( 'domains/cctlds' ) ) {
 			// All we need to do to disable everything is not show the .FR form
@@ -510,6 +523,12 @@ export class DomainDetailsForm extends PureComponent {
 
 	renderCurrentForm() {
 		const { currentStep } = this.state;
+		// eslint-disable-next-line
+		console.log(
+			'render() tldsWithAdditionalDetailsForms',
+			tldsWithAdditionalDetailsForms,
+			currentStep
+		);
 		return includes( tldsWithAdditionalDetailsForms, currentStep )
 			? this.renderExtraDetailsForm( this.state.currentStep )
 			: this.renderDetailsForm();
