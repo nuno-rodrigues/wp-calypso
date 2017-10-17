@@ -1,3 +1,15 @@
+/*eslint-disable*/
+/*
+
+
+
+
+Notes:
+
+
+
+
+ */
 /**
  * External dependencies
  *
@@ -55,6 +67,8 @@ import ExtraInfoForm, {
 	tldsWithAdditionalDetailsForms,
 } from 'components/domains/registrant-extra-info';
 import config from 'config';
+// new component
+import ContactDetailsFormFields from 'components/contact-details-form-fields';
 
 const debug = debugFactory( 'calypso:my-sites:upgrades:checkout:domain-details' );
 const wpcom = wp.undocumented(),
@@ -110,7 +124,7 @@ export class DomainDetailsForm extends PureComponent {
 		} );
 
 		// eslint-disable-next-line
-		console.log( 'componentWillMount() this.state ', this.state );
+		console.log( 'componentWillMount() this.state ', this.formStateController.getInitialState() );
 		this.setState( {
 			form: this.formStateController.getInitialState(),
 		} );
@@ -126,6 +140,8 @@ export class DomainDetailsForm extends PureComponent {
 	componentDidUpdate( prevProps, prevState ) {
 		const previousFormValues = formState.getAllFieldValues( prevState.form );
 		const currentFormValues = formState.getAllFieldValues( this.state.form );
+		// eslint-disable-next-line
+		console.log( 'this.getMainFieldValues()', this.getMainFieldValues() );
 		if ( ! isEqual( previousFormValues, currentFormValues ) ) {
 			this.props.updateContactDetailsCache( this.getMainFieldValues() );
 		}
@@ -541,6 +557,43 @@ export class DomainDetailsForm extends PureComponent {
 		return this.inputRefCallbacks[ name ];
 	}
 
+	// new component methods
+	handleFieldChange = ( { name, value, hideError, ...fieldProps } ) => {
+		// eslint-disable-next-line
+		console.log( 'handleFieldChange', name, value, hideError, fieldProps );
+		this.formStateController.handleFieldChange( {
+			name,
+			value,
+			hideError,
+		} );
+		// temp
+		if ( fieldProps.phoneCountryCode ) {
+			this.setState( {
+				phoneCountryCode: fieldProps.phoneCountryCode,
+			} );
+		}
+	};
+
+	isFieldDisabled = fieldName => {
+		return formState.isFieldDisabled( this.state.form, fieldName );
+	};
+
+	isFieldInvalid = fieldName => {
+		return formState.isFieldInvalid( this.state.form, fieldName );
+	};
+
+	getFieldValue = fieldName => {
+		return formState.getFieldValue( this.state.form, fieldName ) || '';
+	};
+
+	getFieldErrorMessages = fieldName => {
+		// The keys are mapped to snake_case when going to API and camelCase when the response is parsed and we are using
+		// kebab-case for HTML, so instead of using different variations all over the place, this accepts kebab-case and
+		// converts it to camelCase which is the format stored in the formState.
+		return ( formState.getFieldErrorMessages( this.state.form, camelCase( fieldName ) ) || [] )
+			.join( '\n' );
+	};
+
 	renderCurrentForm() {
 		const { currentStep } = this.state;
 		// eslint-disable-next-line
@@ -549,9 +602,18 @@ export class DomainDetailsForm extends PureComponent {
 			tldsWithAdditionalDetailsForms,
 			currentStep
 		);
-		return includes( tldsWithAdditionalDetailsForms, currentStep )
-			? this.renderExtraDetailsForm( this.state.currentStep )
-			: this.renderDetailsForm();
+		return includes( tldsWithAdditionalDetailsForms, currentStep ) ? (
+			this.renderExtraDetailsForm( this.state.currentStep )
+		) : (
+			// : this.renderDetailsForm();
+			<ContactDetailsFormFields
+				contactDetails={ this.props.contactDetails }
+				countriesList={ countriesList }
+				eventFormName="Checkout Form"
+				isFieldDisabled={ this.isFieldDisabled }
+				onFieldChange={ this.handleFieldChange }
+			/>
+		);
 	}
 
 	render() {

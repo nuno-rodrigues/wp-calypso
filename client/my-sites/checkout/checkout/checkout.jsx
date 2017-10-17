@@ -1,3 +1,15 @@
+/*eslint-disable*/
+/*
+
+
+
+
+Notes:
+
+
+
+
+ */
 /**
  * External dependencies
  *
@@ -18,7 +30,7 @@ import analytics from 'lib/analytics';
 import { cartItems } from 'lib/cart-values';
 import { clearSitePlans } from 'state/sites/plans/actions';
 import { clearPurchases } from 'state/purchases/actions';
-import DomainDetailsForm from './domain-details-form';
+import DomainDetailsForm from './domain-details-form-redux';
 import { domainMapping } from 'lib/cart-values/cart-items';
 import { fetchReceiptCompleted } from 'state/receipts/actions';
 import { getExitCheckoutUrl } from 'lib/checkout';
