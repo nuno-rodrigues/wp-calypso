@@ -20,6 +20,7 @@ import PropTypes from 'prop-types';
 import React, { Component, createElement } from 'react';
 import { noop } from 'lodash';
 import { has } from 'lodash';
+import { kebabCase } from 'lodash';
 import { isArray } from 'lodash';
 import { isEqual } from 'lodash';
 import { localize } from 'i18n-calypso';
@@ -104,10 +105,7 @@ class ContactDetailsFormFields extends Component {
 	}
 
 	shouldComponentUpdate( nextProps, nextState ) {
-		// if ( ! isEqual( nextState, this.state ) ) {
-		// 	return true;
-		// }
-		if ( ! isEqual( nextProps.formState, this.props.formState ) ) {
+		if ( ! isEqual( nextProps.fields, this.props.fields ) ) {
 			return true;
 		}
 		return false;
@@ -119,6 +117,10 @@ class ContactDetailsFormFields extends Component {
 		} );
 	}
 
+	getCountryCode = () => {
+		const { fields } = this.props;
+		return fields.countryCode || '';
+	};
 	//componentDidUpdate( prevProps, prevState ) {}
 
 	handleFieldChange = event => {
@@ -170,21 +172,13 @@ class ContactDetailsFormFields extends Component {
 		} );
 	};
 
-	isError = errors => {
-		return isArray( errors ) && errors.length > 0;
-	};
-
-	getCountryCodeFromState = () => {
-		const { fields } = this.props;
-		return fields.countryCode || 'US';
-	};
-
 	createField = ( fieldName, componentClass, props ) => {
-		const { fields, eventFormName, formState } = this.props;
+		const { fields, eventFormName } = this.props;
 		// eslint-disable-next-line
-		console.log( 'formState', formState );
-		return has( formState, fieldName )
-			? createElement(
+		console.log( 'fields', fields );
+		return has( fields, fieldName ) ? (
+			<div className={ `contact-details-form-fields__container ${ kebabCase( fieldName ) }` }>
+				{ createElement(
 					componentClass,
 					Object.assign(
 						{},
@@ -201,95 +195,80 @@ class ContactDetailsFormFields extends Component {
 						},
 						props
 					)
-				)
-			: null;
+				) }
+			</div>
+		) : null;
 	};
 
 	render() {
 		const { translate, className, countriesList } = this.props;
-		const countryCode = this.getCountryCodeFromState();
+		const countryCode = this.getCountryCode();
 		const { phoneCountryCode } = this.state;
 		// eslint-disable-next-line
 		console.log( 'RENDER ME SEYMOUR' );
 		return (
 			<FormFieldset className={ `contact-details-form-fields ${ className }` }>
-				<div className="contact-details-form-fields__name">
-					{ this.createField( 'firstName', Input, {
-						autoFocus: true,
-						label: translate( 'First Name' ),
-					} ) }
+				{ this.createField( 'firstName', Input, {
+					autoFocus: true,
+					label: translate( 'First Name' ),
+				} ) }
 
-					{ this.createField( 'lastName', Input, {
-						label: translate( 'Last Name' ),
-					} ) }
-				</div>
+				{ this.createField( 'lastName', Input, {
+					label: translate( 'Last Name' ),
+				} ) }
 
-				<div className="contact-details-form-fields__organization">
-					{ this.createField( 'organization', HiddenInput, {
-						label: translate( 'Organization' ),
-						text: translate( "+ Add your organization's name" ),
-					} ) }
-				</div>
+				{ this.createField( 'organization', HiddenInput, {
+					label: translate( 'Organization' ),
+					text: translate( "+ Add your organization's name" ),
+				} ) }
 
-				<div className="contact-details-form-fields__email">
-					{ this.createField( 'email', Input, {
-						label: translate( 'Email' ),
-					} ) }
-				</div>
+				{ this.createField( 'email', Input, {
+					label: translate( 'Email' ),
+				} ) }
 
-				<div className="contact-details-form-fields__fax">
-					{ this.createField( 'fax', Input, {
-						label: translate( 'Fax' ),
-					} ) }
-				</div>
+				{ this.createField( 'fax', Input, {
+					label: translate( 'Fax' ),
+				} ) }
 
-				<div className="contact-details-form-fields__phone">
-					{ this.createField( 'phone', FormPhoneMediaInput, {
-						label: translate( 'Phone' ),
-						onChange: this.handlePhoneChange,
-						countriesList,
-						countryCode: phoneCountryCode,
-					} ) }
-				</div>
+				{ this.createField( 'phone', FormPhoneMediaInput, {
+					label: translate( 'Phone' ),
+					onChange: this.handlePhoneChange,
+					countriesList,
+					countryCode: phoneCountryCode,
+				} ) }
 
-				<div className="contact-details-form-fields__address">
-					{ this.createField( 'address1', Input, {
-						maxLength: 40,
-						label: translate( 'Address' ),
-					} ) }
+				{ !! countryCode && (
+					<div className="contact-details-form-fields__address-fields">
+						{ this.createField( 'address1', Input, {
+							maxLength: 40,
+							label: translate( 'Address' ),
+						} ) }
 
-					{ this.createField( 'address2', HiddenInput, {
-						maxLength: 40,
-						label: translate( 'Address Line 2' ),
-						text: translate( '+ Add Address Line 2' ),
-					} ) }
-				</div>
+						{ this.createField( 'address2', HiddenInput, {
+							maxLength: 40,
+							label: translate( 'Address Line 2' ),
+							text: translate( '+ Add Address Line 2' ),
+						} ) }
 
-				<div className="contact-details-form-fields__city">
-					{ this.createField( 'city', Input, {
-						label: translate( 'City' ),
-					} ) }
-				</div>
+						{ this.createField( 'city', Input, {
+							label: translate( 'City' ),
+						} ) }
 
-				<div className="contact-details-form-fields__state">
-					{ this.createField( 'state', StateSelect, {
-						label: translate( 'State' ),
-						countryCode,
-					} ) }
-				</div>
+						{ this.createField( 'state', StateSelect, {
+							label: translate( 'State' ),
+							countryCode,
+						} ) }
 
-				<div className="contact-details-form-fields__postal-code">
-					{ this.createField( 'postalCode', Input, {
-						label: translate( 'Postal Code' ),
-					} ) }
-				</div>
+						{ this.createField( 'postalCode', Input, {
+							label: translate( 'Postal Code' ),
+						} ) }
+					</div>
+				) }
 
-				<div className="contact-details-form-fields__country">
-					{ this.createField( 'countryCode', CountrySelect, {
-						label: translate( 'Country' ),
-						countriesList,
-					} ) }
-				</div>
+				{ this.createField( 'countryCode', CountrySelect, {
+					label: translate( 'Country' ),
+					countriesList,
+				} ) }
 			</FormFieldset>
 		);
 	}

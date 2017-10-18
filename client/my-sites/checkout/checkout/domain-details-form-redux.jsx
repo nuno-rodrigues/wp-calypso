@@ -93,6 +93,8 @@ export class DomainDetailsForm extends PureComponent {
 			'fax',
 		];
 
+		this.googlAppsFieldNames = [ 'firstName', 'lastName', 'postalCode', 'countryCode' ];
+
 		const steps = [ 'mainForm', ...this.getRequiredExtraSteps() ];
 		debug( 'steps:', steps );
 
@@ -257,9 +259,12 @@ export class DomainDetailsForm extends PureComponent {
 
 	getMainFieldValues() {
 		const mainFieldValues = formState.getAllFieldValues( this.state.form );
+		const phone = mainFieldValues.phone
+			? toIcannFormat( mainFieldValues.phone, countries[ this.state.phoneCountryCode ] )
+			: null;
 		return {
 			...mainFieldValues,
-			phone: toIcannFormat( mainFieldValues.phone, countries[ this.state.phoneCountryCode ] ),
+			phone,
 		};
 	}
 
@@ -580,6 +585,12 @@ export class DomainDetailsForm extends PureComponent {
 	};
 
 	isFieldDisabled = fieldName => {
+		// eslint-disable-next-line
+		console.log(
+			'isFieldDisabled',
+			this.state.form,
+			formState.isFieldDisabled( this.state.form, fieldName )
+		);
 		return formState.isFieldDisabled( this.state.form, fieldName );
 	};
 
@@ -601,20 +612,22 @@ export class DomainDetailsForm extends PureComponent {
 
 	renderCurrentForm() {
 		const { currentStep } = this.state;
-		// eslint-disable-next-line
-		console.log(
-			'render() tldsWithAdditionalDetailsForms',
-			tldsWithAdditionalDetailsForms,
-			currentStep
+		const needsOnlyGoogleAppsDetails = this.needsOnlyGoogleAppsDetails();
+
+		const fields = pick(
+			this.props.contactDetails,
+			needsOnlyGoogleAppsDetails ? this.googlAppsFieldNames : Object.keys( this.state.form )
 		);
+		const contactDetailsClassName = needsOnlyGoogleAppsDetails ? 'only-google-apps-details' : '';
+
 		return includes( tldsWithAdditionalDetailsForms, currentStep ) ? (
 			this.renderExtraDetailsForm( this.state.currentStep )
 		) : (
 			// : this.renderDetailsForm();
 			<ContactDetailsFormFields
 				eventFormName="Checkout Form"
-				fields={ this.props.contactDetails }
-				formState={ this.state.form }
+				className={ contactDetailsClassName }
+				fields={ fields }
 				countriesList={ countriesList }
 				onFieldChange={ this.handleFieldChange }
 				isFieldDisabled={ this.isFieldDisabled }
