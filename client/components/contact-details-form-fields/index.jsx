@@ -5,7 +5,7 @@
 
 
 Notes:
-
+- inputFocus on Error
 
 
 
@@ -108,6 +108,11 @@ class ContactDetailsFormFields extends Component {
 		if ( ! isEqual( nextProps.fields, this.props.fields ) ) {
 			return true;
 		}
+
+		if ( ! isEqual( nextProps.invalidFields, this.props.invalidFields ) ) {
+			return true;
+		}
+
 		return false;
 	}
 
@@ -121,7 +126,6 @@ class ContactDetailsFormFields extends Component {
 		const { fields } = this.props;
 		return fields.countryCode || '';
 	};
-	//componentDidUpdate( prevProps, prevState ) {}
 
 	handleFieldChange = event => {
 		const { name, value } = event.target;
@@ -174,8 +178,7 @@ class ContactDetailsFormFields extends Component {
 
 	createField = ( fieldName, componentClass, props ) => {
 		const { fields, eventFormName } = this.props;
-		// eslint-disable-next-line
-		console.log( 'fields', fields );
+
 		return has( fields, fieldName ) ? (
 			<div className={ `contact-details-form-fields__container ${ kebabCase( fieldName ) }` }>
 				{ createElement(
@@ -204,8 +207,7 @@ class ContactDetailsFormFields extends Component {
 		const { translate, className, countriesList } = this.props;
 		const countryCode = this.getCountryCode();
 		const { phoneCountryCode } = this.state;
-		// eslint-disable-next-line
-		console.log( 'RENDER ME SEYMOUR' );
+
 		return (
 			<FormFieldset className={ `contact-details-form-fields ${ className }` }>
 				{ this.createField( 'firstName', Input, {
