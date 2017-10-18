@@ -114,9 +114,9 @@ export class DomainDetailsForm extends PureComponent {
 
 		const initialFields = pick( this.props.contactDetails, this.fieldNames );
 		this.formStateController = formState.Controller( {
-			//fieldNames: this.fieldNames,
-			initialFields,
-			//loadFunction: this.loadFormStateFromRedux,
+			fieldNames: this.fieldNames,
+			//initialFields,
+			loadFunction: this.loadFormStateFromRedux,
 			sanitizerFunction: this.sanitize,
 			validatorFunction: this.validate,
 			onNewState: this.setFormState,
@@ -147,10 +147,10 @@ export class DomainDetailsForm extends PureComponent {
 		}
 	}
 
-	// loadFormStateFromRedux = fn => {
-	// 	// only load the properties relevant to the main form fields
-	// 	fn( null, pick( this.props.contactDetails, this.fieldNames ) );
-	// };
+	loadFormStateFromRedux = fn => {
+		// only load the properties relevant to the main form fields
+		fn( null, pick( this.props.contactDetails, this.fieldNames ) );
+	};
 
 	validate = ( fieldValues, onComplete ) => {
 		if ( this.needsOnlyGoogleAppsDetails() ) {
@@ -189,7 +189,8 @@ export class DomainDetailsForm extends PureComponent {
 		if ( ! this.needsFax() ) {
 			delete form.fax;
 		}
-
+		// eslint-disable-next-line
+		console.log( 'form.state.errors', form.state );
 		this.setState( { form } );
 	};
 
@@ -558,13 +559,17 @@ export class DomainDetailsForm extends PureComponent {
 	}
 
 	// new component methods
-	handleFieldChange = ( { name, value, hideError, ...fieldProps } ) => {
+	handleFieldChange = ( { name, value, ...fieldProps } ) => {
 		// eslint-disable-next-line
-		console.log( 'handleFieldChange', name, value, hideError, fieldProps );
+		console.log( 'handleFieldChange', {
+			name,
+			value,
+			...fieldProps,
+		} );
 		this.formStateController.handleFieldChange( {
 			name,
 			value,
-			hideError,
+			...fieldProps,
 		} );
 		// temp
 		if ( fieldProps.phoneCountryCode ) {
@@ -583,7 +588,7 @@ export class DomainDetailsForm extends PureComponent {
 	};
 
 	getFieldValue = fieldName => {
-		return formState.getFieldValue( this.state.form, fieldName ) || '';
+		return formState.getFieldValue( fieldName ) || '';
 	};
 
 	getFieldErrorMessages = fieldName => {
@@ -607,11 +612,14 @@ export class DomainDetailsForm extends PureComponent {
 		) : (
 			// : this.renderDetailsForm();
 			<ContactDetailsFormFields
-				contactDetails={ this.props.contactDetails }
-				countriesList={ countriesList }
 				eventFormName="Checkout Form"
-				isFieldDisabled={ this.isFieldDisabled }
+				fields={ this.props.contactDetails }
+				formState={ this.state.form }
+				countriesList={ countriesList }
 				onFieldChange={ this.handleFieldChange }
+				isFieldDisabled={ this.isFieldDisabled }
+				isFieldInvalid={ this.isFieldInvalid }
+				getFieldErrorMessages={ this.getFieldErrorMessages }
 			/>
 		);
 	}

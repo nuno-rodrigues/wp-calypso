@@ -104,16 +104,18 @@ class ContactDetailsFormFields extends Component {
 	}
 
 	shouldComponentUpdate( nextProps, nextState ) {
-		if ( ! isEqual( nextState, this.state ) ) {
+		// if ( ! isEqual( nextState, this.state ) ) {
+		// 	return true;
+		// }
+		if ( ! isEqual( nextProps.formState, this.props.formState ) ) {
 			return true;
 		}
-
 		return false;
 	}
 
 	componentWillMount() {
 		this.setState( {
-			...this.props.contactDetails,
+			...this.props.fields,
 		} );
 	}
 
@@ -128,6 +130,12 @@ class ContactDetailsFormFields extends Component {
 
 		if ( name === 'countryCode' ) {
 			// Resets the state field every time the user selects a different country
+			onFieldChange( {
+				name: 'state',
+				value: '',
+				hideError: true,
+			} );
+
 			newState.state = '';
 
 			// If the phone number is unavailable, set the phone prefix to the current country
@@ -148,7 +156,8 @@ class ContactDetailsFormFields extends Component {
 		const { onFieldChange } = this.props;
 		// eslint-disable-next-line
 		console.log( 'handlePhoneChange', value, countryCode, this.state );
-
+		// we're only passing phoneCountryCode to the parent for now
+		//
 		onFieldChange( {
 			name: 'phone',
 			value,
@@ -166,15 +175,15 @@ class ContactDetailsFormFields extends Component {
 	};
 
 	getCountryCodeFromState = () => {
-		const { contactDetails } = this.props;
-		return contactDetails.countryCode || 'US';
+		const { fields } = this.props;
+		return fields.countryCode || 'US';
 	};
 
 	createField = ( fieldName, componentClass, props ) => {
-		const { contactDetails, eventFormName } = this.props;
+		const { fields, eventFormName, formState } = this.props;
 		// eslint-disable-next-line
-		console.log( 'contactDetails', contactDetails );
-		return has( contactDetails, fieldName )
+		console.log( 'formState', formState );
+		return has( formState, fieldName )
 			? createElement(
 					componentClass,
 					Object.assign(
@@ -183,9 +192,9 @@ class ContactDetailsFormFields extends Component {
 							labelClass: 'contact-details-form-fields__label',
 							additionalClasses: 'contact-details-form-fields__field',
 							eventFormName: this.props.eventFormName,
-							//disabled: this.props.isFieldDisabled( fieldName ),
-							//isError: this.isError( formState[ fieldName ].errors ),
-							//errorMessage: formState[ fieldName ].errors && formState[ fieldName ].errors .join( '\n' ),
+							disabled: this.props.isFieldDisabled( fieldName ),
+							isError: this.props.isFieldInvalid( fieldName ),
+							errorMessage: this.props.getFieldErrorMessages( fieldName ),
 							onChange: this.handleFieldChange,
 							name: fieldName,
 							value: this.state[ fieldName ] || '',
@@ -200,7 +209,8 @@ class ContactDetailsFormFields extends Component {
 		const { translate, className, countriesList } = this.props;
 		const countryCode = this.getCountryCodeFromState();
 		const { phoneCountryCode } = this.state;
-
+		// eslint-disable-next-line
+		console.log( 'RENDER ME SEYMOUR' );
 		return (
 			<FormFieldset className={ `contact-details-form-fields ${ className }` }>
 				<div className="contact-details-form-fields__name">
@@ -215,8 +225,9 @@ class ContactDetailsFormFields extends Component {
 				</div>
 
 				<div className="contact-details-form-fields__organization">
-					{ this.createField( 'organization', Input, {
+					{ this.createField( 'organization', HiddenInput, {
 						label: translate( 'Organization' ),
+						text: translate( "+ Add your organization's name" ),
 					} ) }
 				</div>
 
