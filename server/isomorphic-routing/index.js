@@ -96,10 +96,18 @@ function compose( ...functions ) {
 }
 
 export function getCacheKey( context ) {
+	// express.js Request object has a path property for the pathname (path without the querystring)
+	const pathname = context.pathname || context.path;
+
 	if ( isEmpty( context.query ) || isEmpty( context.cacheQueryKeys ) ) {
-		return context.pathname;
+		return pathname;
 	}
 
 	const cachedQueryParams = pick( context.query, context.cacheQueryKeys );
-	return context.pathname + '?' + qs.stringify( cachedQueryParams, { sort: ( a, b ) => a.localCompare( b ) } );
+
+	if ( isEmpty( cachedQueryParams ) ) {
+		return pathname;
+	}
+
+	return pathname + '?' + qs.stringify( cachedQueryParams, { sort: ( a, b ) => a.localCompare( b ) } );
 }
