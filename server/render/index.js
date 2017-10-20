@@ -117,7 +117,7 @@ export function serverRender( req, res ) {
 		context.initialReduxState = pick( context.store.getState(), reduxSubtrees );
 
 		// And cache on the server, too.
-		if ( cacheKey ) {
+		if ( cacheKey && ! stateCache.get( cacheKey ) ) {
 			const cacheableInitialState = pick( context.store.getState(), cacheableReduxSubtrees );
 			const serverState = reducer( cacheableInitialState, { type: SERIALIZE } );
 			stateCache.set( cacheKey, serverState );
