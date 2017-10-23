@@ -21,6 +21,7 @@ import React, { Component, createElement } from 'react';
 import noop from 'lodash/noop';
 import has from 'lodash/has';
 import kebabCase from 'lodash/kebabCase';
+import pick from 'lodash/pick';
 import head from 'lodash/head';
 import isEqual from 'lodash/isEqual';
 import camelCase from 'lodash/camelCase';
@@ -32,11 +33,12 @@ import { localize } from 'i18n-calypso';
 import RegionAddressFieldsets from 'my-sites/domains/components/domain-form-fieldsets/region-address-fieldsets';
 import { CountrySelect, StateSelect, Input, HiddenInput } from 'my-sites/domains/components/form';
 import FormFieldset from 'components/forms/form-fieldset';
+import FormFooter from 'my-sites/domains/domain-management/components/form-footer';
+import FormButton from 'components/forms/form-button';
 import FormPhoneMediaInput from 'components/forms/form-phone-media-input';
 import { countries } from 'components/phone-input/data';
 import { forDomainRegistrations as countriesListForDomainRegistrations } from 'lib/countries-list';
 import formState from 'lib/form-state';
-import FormButton from 'components/forms/form-button';
 
 const countriesList = countriesListForDomainRegistrations();
 
@@ -251,31 +253,36 @@ class ContactDetailsFormFields extends Component {
 		} );
 	};
 
-	createField = ( name, componentClass, props ) => {
+	getFieldProps = ( name, needsChildRef = false ) => {
 		// if we're referencing a DOM object in a child component we need to add the `inputRef` prop
-		const ref = this.getRefCallbackProp( name, props.needsChildRef ? 'inputRef' : 'ref' );
+		const ref = this.getRefCallbackProp( name, needsChildRef ? 'inputRef' : 'ref' );
 		const { form, eventFormName } = this.props;
+		return {
+			labelClass: 'contact-details-form-fields__label',
+			additionalClasses: 'contact-details-form-fields__field',
+			disabled: formState.isFieldDisabled( form, name ),
+			isError: formState.isFieldInvalid( form, name ),
+			errorMessage: ( formState.getFieldErrorMessages( form, camelCase( name ) ) || [] )
+				.join( '\n' ),
+			onChange: this.handleFieldChange,
+			value: formState.getFieldValue( form, name ) || '',
+			name,
+			eventFormName,
+			...ref,
+		}
+	};
 
-		return has( form, name ) ? (
+	createField = ( name, componentClass, additionalProps ) => {
+		const { contactDetails, form, eventFormName } = this.props;
+
+		return has( contactDetails, name ) ? (
 			<div className={ `contact-details-form-fields__container ${ kebabCase( name ) }` }>
 				{ createElement(
 					componentClass,
 					Object.assign(
 						{},
-						{
-							labelClass: 'contact-details-form-fields__label',
-							additionalClasses: 'contact-details-form-fields__field',
-							disabled: formState.isFieldDisabled( form, name ),
-							isError: formState.isFieldInvalid( form, name ),
-							errorMessage: ( formState.getFieldErrorMessages( form, camelCase( name ) ) || [] )
-								.join( '\n' ),
-							onChange: this.handleFieldChange,
-							value: formState.getFieldValue( form, name ) || '',
-							name,
-							eventFormName,
-							...ref,
-						},
-						props
+						...this.getFieldProps( name ),
+						additionalProps
 					)
 				) }
 			</div>
@@ -358,12 +365,25 @@ class ContactDetailsFormFields extends Component {
 					countriesList,
 				} ) }
 
-				<FormButton
-					className="checkout__domain-details-form-submit-button"
-					onClick={ this.handleSubmitButtonClick }
-				>
-					Help
-				</FormButton>
+				{ this.props.children }
+
+				<FormFooter>
+					<FormButton
+						className="checkout__domain-details-form-submit-button"
+						disabled={ false }
+						onClick={ this.handleSubmitButtonClick }
+					>
+						Help
+					</FormButton>
+					<FormButton
+						type="button"
+						isPrimary={ false }
+						disabled={ false }
+						onClick={ noop }
+					>
+						{ translate( 'Cancel' ) }
+					</FormButton>
+				</FormFooter>
 			</FormFieldset>
 		);
 	}
