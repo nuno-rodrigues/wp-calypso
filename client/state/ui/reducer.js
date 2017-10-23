@@ -28,6 +28,7 @@ import themeSetup from './theme-setup/reducers';
 import language from './language/reducer';
 import npsSurveyNotice from './nps-survey-notice/reducer';
 import postTypeList from './post-type-list/reducer';
+import route from './route/reducer';
 
 /**
  * Tracks the currently selected site ID.
@@ -99,6 +100,7 @@ const reducer = combineReducers( {
 	hasSidebar,
 	isPreviewShowing,
 	queryArguments,
+	route,
 	selectedSiteId,
 	siteSelectionInitialized,
 	dropZone,
