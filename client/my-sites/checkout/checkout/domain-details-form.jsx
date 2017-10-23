@@ -523,12 +523,7 @@ export class DomainDetailsForm extends PureComponent {
 
 	renderCurrentForm() {
 		const { currentStep } = this.state;
-		// eslint-disable-next-line
-		console.log(
-			'render() tldsWithAdditionalDetailsForms',
-			tldsWithAdditionalDetailsForms,
-			currentStep
-		);
+
 		return includes( tldsWithAdditionalDetailsForms, currentStep )
 			? this.renderExtraDetailsForm( this.state.currentStep )
 			: this.renderDetailsForm();

@@ -18,20 +18,27 @@ Notes:
 
 import PropTypes from 'prop-types';
 import React, { Component, createElement } from 'react';
-import { noop } from 'lodash';
-import { has } from 'lodash';
-import { kebabCase } from 'lodash';
-import { isArray } from 'lodash';
-import { isEqual } from 'lodash';
+import noop from 'lodash/noop';
+import has from 'lodash/has';
+import kebabCase from 'lodash/kebabCase';
+import head from 'lodash/head';
+import isEqual from 'lodash/isEqual';
+import camelCase from 'lodash/camelCase';
 import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
  */
+import RegionAddressFieldsets from 'my-sites/domains/components/domain-form-fieldsets/region-address-fieldsets';
 import { CountrySelect, StateSelect, Input, HiddenInput } from 'my-sites/domains/components/form';
 import FormFieldset from 'components/forms/form-fieldset';
 import FormPhoneMediaInput from 'components/forms/form-phone-media-input';
 import { countries } from 'components/phone-input/data';
+import { forDomainRegistrations as countriesListForDomainRegistrations } from 'lib/countries-list';
+import formState from 'lib/form-state';
+import FormButton from 'components/forms/form-button';
+
+const countriesList = countriesListForDomainRegistrations();
 
 class ContactDetailsFormFields extends Component {
 	/*	static propTypes = {
@@ -88,51 +95,124 @@ class ContactDetailsFormFields extends Component {
 		super( props, context );
 
 		this.state = {
-			firstName: '',
-			lastName: '',
-			organization: '',
-			email: '',
-			phone: '',
-			address1: '',
-			address2: '',
-			city: '',
-			state: '',
-			postalCode: '',
-			countryCode: '',
-			fax: '',
+			// firstName: '',
+			// lastName: '',
+			// organization: '',
+			// email: '',
+			// phone: '',
+			// address1: '',
+			// address2: '',
+			// city: '',
+			// state: '',
+			// postalCode: '',
+			// countryCode: '',
+			// fax: '',
 			phoneCountryCode: 'US',
 		};
+		this.fieldNames = [
+			'firstName',
+			'lastName',
+			'organization',
+			'email',
+			'phone',
+			'address1',
+			'address2',
+			'city',
+			'state',
+			'postalCode',
+			'countryCode',
+			'fax',
+		];
+		this.inputRefs = {};
+		this.inputRefCallbacks = {};
+		this.formStateController = null;
+		this.shouldAutoFocusAddressField = false;
 	}
 
-	shouldComponentUpdate( nextProps, nextState ) {
-		if ( ! isEqual( nextProps.fields, this.props.fields ) ) {
+	shouldComponentUpdate( nextProps ) {
+		if ( ! isEqual( nextProps.form, this.props.form, ) ) {
 			return true;
 		}
-
-		if ( ! isEqual( nextProps.invalidFields, this.props.invalidFields ) ) {
-			return true;
-		}
-
 		return false;
 	}
 
 	componentWillMount() {
+		// eslint-disable-next-line
+		console.log( 'componentWillMount() this.props.contactDetails ', this.props.contactDetails );
+
+		const initialFields = pick( this.props.contactDetails, this.fieldNames );
+		this.formStateController = formState.Controller( {
+			//fieldNames: this.fieldNames,
+			initialFields,
+			//loadFunction: this.loadFormStateFromRedux,
+			sanitizerFunction: this.sanitize,
+			validatorFunction: this.validate,
+			onNewState: this.setFormState,
+			onError: this.handleFormControllerError,
+		} );
+
+		// eslint-disable-next-line
+		console.log( 'componentWillMount() this.state ', this.state );
 		this.setState( {
-			...this.props.fields,
+			form: this.formStateController.getInitialState(),
 		} );
 	}
 
-	getCountryCode = () => {
-		const { fields } = this.props;
-		return fields.countryCode || '';
+	// We want to cache the functions to avoid triggering unnecessary rerenders
+	getRefCallbackProp( name, refAttributeName ) {
+		if ( ! this.inputRefCallbacks[ name ] ) {
+			this.inputRefCallbacks[ name ] = el => ( this.inputRefs[ name ] = el );
+		}
+
+		return {
+			[ refAttributeName ]: this.inputRefCallbacks[ name ]
+		};
+	}
+
+	focusFirstError() {
+		const { form } = this.props;
+		// eslint-disable-next-line
+		console.log( ' formState.getInvalidFields( form )',  formState.getInvalidFields( form ) );
+		const firstErrorName = head( formState.getInvalidFields( form ) ).name;
+		// eslint-disable-next-line
+		console.log( 'firstErrorName', firstErrorName, this.inputRefs );
+		const firstErrorRef =  this.inputRefs[ firstErrorName ] || null;
+		// eslint-disable-next-line
+		console.log( 'firstErrorRef', firstErrorRef );
+		firstErrorRef && firstErrorRef.focus();
+	}
+
+	fieldRefFocusCallback( field ) {
+		field && field.focus();
+	}
+
+	focusAddressField() {
+		const inputRef = this.inputRefs[ 'address1' ] || null;
+		
+		// eslint-disable-next-line
+		console.log( this.inputRefs );
+
+		if ( inputRef ) {
+			inputRef.focus();
+		} else {
+			// The preference is to fire an inputRef callback
+			// when the previous and next countryCodes don't match,
+			// rather than set a flag.
+			// Multiple renders triggered by formState via `this.setFormState`
+			// prevent it.
+			this.shouldAutoFocusAddressField = true;
+		}
+	}
+
+	handleSubmitButtonClick = event => {
+		event.preventDefault();
+		this.focusFirstError();
 	};
 
 	handleFieldChange = event => {
 		const { name, value } = event.target;
 		const { onFieldChange } = this.props;
-		const newState = {
-			[ name ]: value,
-		};
+
 
 		if ( name === 'countryCode' ) {
 			// Resets the state field every time the user selects a different country
@@ -142,28 +222,24 @@ class ContactDetailsFormFields extends Component {
 				hideError: true,
 			} );
 
-			newState.state = '';
-
 			// If the phone number is unavailable, set the phone prefix to the current country
 			if ( ! this.state.phone ) {
-				newState.phoneCountryCode = value;
+				this.setState( {
+					phoneCountryCode: value,
+				} );
 			}
+			this.focusAddressField();
 		}
 
-		this.setState( newState, () => {
-			onFieldChange( {
-				name,
-				value,
-			} );
+		onFieldChange( {
+			name,
+			value,
 		} );
 	};
 
 	handlePhoneChange = ( { value, countryCode } ) => {
 		const { onFieldChange } = this.props;
-		// eslint-disable-next-line
-		console.log( 'handlePhoneChange', value, countryCode, this.state );
-		// we're only passing phoneCountryCode to the parent for now
-		//
+
 		onFieldChange( {
 			name: 'phone',
 			value,
@@ -171,16 +247,17 @@ class ContactDetailsFormFields extends Component {
 		} );
 
 		this.setState( {
-			phone: value,
 			phoneCountryCode: countryCode,
 		} );
 	};
 
-	createField = ( fieldName, componentClass, props ) => {
-		const { fields, eventFormName } = this.props;
+	createField = ( name, componentClass, props ) => {
+		// if we're referencing a DOM object in a child component we need to add the `inputRef` prop
+		const ref = this.getRefCallbackProp( name, props.needsChildRef ? 'inputRef' : 'ref' );
+		const { form, eventFormName } = this.props;
 
-		return has( fields, fieldName ) ? (
-			<div className={ `contact-details-form-fields__container ${ kebabCase( fieldName ) }` }>
+		return has( form, name ) ? (
+			<div className={ `contact-details-form-fields__container ${ kebabCase( name ) }` }>
 				{ createElement(
 					componentClass,
 					Object.assign(
@@ -188,13 +265,15 @@ class ContactDetailsFormFields extends Component {
 						{
 							labelClass: 'contact-details-form-fields__label',
 							additionalClasses: 'contact-details-form-fields__field',
-							eventFormName: this.props.eventFormName,
-							disabled: this.props.isFieldDisabled( fieldName ),
-							isError: this.props.isFieldInvalid( fieldName ),
-							errorMessage: this.props.getFieldErrorMessages( fieldName ),
+							disabled: formState.isFieldDisabled( form, name ),
+							isError: formState.isFieldInvalid( form, name ),
+							errorMessage: ( formState.getFieldErrorMessages( form, camelCase( name ) ) || [] )
+								.join( '\n' ),
 							onChange: this.handleFieldChange,
-							name: fieldName,
-							value: this.state[ fieldName ] || '',
+							value: formState.getFieldValue( form, name ) || '',
+							name,
+							eventFormName,
+							...ref,
 						},
 						props
 					)
@@ -204,10 +283,10 @@ class ContactDetailsFormFields extends Component {
 	};
 
 	render() {
-		const { translate, className, countriesList } = this.props;
-		const countryCode = this.getCountryCode();
+		const { translate, className, countryCode } = this.props;
 		const { phoneCountryCode } = this.state;
-
+		// eslint-disable-next-line
+		console.log( 'RENDER ME SEYMOUR CONTACT' );
 		return (
 			<FormFieldset className={ `contact-details-form-fields ${ className }` }>
 				{ this.createField( 'firstName', Input, {
@@ -238,12 +317,12 @@ class ContactDetailsFormFields extends Component {
 					countriesList,
 					countryCode: phoneCountryCode,
 				} ) }
-
 				{ !! countryCode && (
 					<div className="contact-details-form-fields__address-fields">
 						{ this.createField( 'address1', Input, {
 							maxLength: 40,
 							label: translate( 'Address' ),
+							//ref: this.shouldAutoFocusAddressField ? this.fieldRefFocusCallback : noop,
 						} ) }
 
 						{ this.createField( 'address2', HiddenInput, {
@@ -266,11 +345,25 @@ class ContactDetailsFormFields extends Component {
 						} ) }
 					</div>
 				) }
+{/*				{ countryCode && (
+					<RegionAddressFieldsets
+						getFieldProps={ this.getFieldProps }
+						countryCode={ countryCode }
+						shouldAutoFocusAddressField={ this.shouldAutoFocusAddressField }
+					/>
+				) }*/}
 
 				{ this.createField( 'countryCode', CountrySelect, {
 					label: translate( 'Country' ),
 					countriesList,
 				} ) }
+
+				<FormButton
+					className="checkout__domain-details-form-submit-button"
+					onClick={ this.handleSubmitButtonClick }
+				>
+					Help
+				</FormButton>
 			</FormFieldset>
 		);
 	}
