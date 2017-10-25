@@ -35,7 +35,7 @@ describe( 'reducer', () => {
 			'olark',
 			'postTypeList',
 			'preview',
-			'queryArguments',
+			'route',
 			'reader',
 			'section',
 			'selectedSiteId',

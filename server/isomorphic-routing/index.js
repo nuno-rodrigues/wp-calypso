@@ -11,7 +11,7 @@ import { serverRender } from 'render';
 import { setSection as setSectionMiddlewareFactory } from '../../client/controller';
 import { setRoute as setRouteAction } from 'state/ui/actions';
 import getCurrentRoute from 'state/selectors/get-current-route';
-import getCurrentQueryArguments from 'state/ui/selectors';
+import { getCurrentQueryArguments } from 'state/ui/selectors';
 
 export function serverRouter( expressApp, setUpRoute, section ) {
 	return function( route, ...middlewares ) {

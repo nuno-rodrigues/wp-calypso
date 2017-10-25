@@ -127,11 +127,11 @@ export function isPreviewShowing( state ) {
 }
 
 export function getInitialQueryArguments( state ) {
-	return state.ui.queryArguments.initial;
+	return state.ui.route.query.initial;
 }
 
 export function getCurrentQueryArguments( state ) {
-	return state.ui.queryArguments.current;
+	return state.ui.route.query.current;
 }
 
 export function hasSidebar( state ) {

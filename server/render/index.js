@@ -104,22 +104,18 @@ export function serverRender( req, res ) {
 		metas = getDocumentHeadMeta( context.store.getState() );
 		links = getDocumentHeadLink( context.store.getState() );
 
-		const cacheableReduxSubtrees = [ 'documentHead' ];
-		let reduxSubtrees;
+		let reduxSubtrees = [ 'documentHead' ];
 
 		if ( isSectionIsomorphic( context.store.getState() ) ) {
-			reduxSubtrees = cacheableReduxSubtrees.concat( [ 'ui', 'themes' ] );
-		} else {
-			reduxSubtrees = cacheableReduxSubtrees;
+			reduxSubtrees = reduxSubtrees.concat( [ 'ui', 'themes' ] );
 		}
 
 		// Send state to client
 		context.initialReduxState = pick( context.store.getState(), reduxSubtrees );
 
 		// And cache on the server, too.
-		if ( cacheKey && ! stateCache.get( cacheKey ) ) {
-			const cacheableInitialState = pick( context.store.getState(), cacheableReduxSubtrees );
-			const serverState = reducer( cacheableInitialState, { type: SERIALIZE } );
+		if ( cacheKey && ! stateCache.get( cacheKey ) && ! context.user ) {
+			const serverState = reducer( context.initialReduxState, { type: SERIALIZE } );
 			stateCache.set( cacheKey, serverState );
 		}
 

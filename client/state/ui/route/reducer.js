@@ -7,9 +7,13 @@
 /**
  * Internal dependencies
  */
-import { createReducer } from 'state/utils';
-import { ROUTE_SET } from 'state/action-types';
+import { combineReducers } from 'state/utils';
+import path from './path/reducer';
+import query from './query/reducer';
 
-export default createReducer( '/', {
-	[ ROUTE_SET ]: ( state, { path } ) => path,
+const route = combineReducers( {
+	path,
+	query,
 } );
+
+export default route;

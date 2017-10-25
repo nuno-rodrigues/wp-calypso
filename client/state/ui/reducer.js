@@ -8,15 +8,12 @@ import {
 	SELECTED_SITE_SET,
 	SECTION_SET,
 	PREVIEW_IS_SHOWING,
-	SERIALIZE,
-	DESERIALIZE,
 	NOTIFICATIONS_PANEL_TOGGLE,
 } from 'state/action-types';
 import { combineReducers, createReducer } from 'state/utils';
 import editor from './editor/reducer';
 import dropZone from './drop-zone/reducer';
 import guidedTour from './guided-tours/reducer';
-import queryArguments from './query-arguments/reducer';
 import reader from './reader/reducer';
 import oauth2Clients from './oauth2-clients/reducer';
 import olark from './olark/reducer';
@@ -99,7 +96,6 @@ const reducer = combineReducers( {
 	layoutFocus,
 	hasSidebar,
 	isPreviewShowing,
-	queryArguments,
 	route,
 	selectedSiteId,
 	siteSelectionInitialized,
@@ -119,13 +115,4 @@ const reducer = combineReducers( {
 	postTypeList,
 } );
 
-const ui = function( state, action ) {
-	if ( SERIALIZE === action.type || DESERIALIZE === action.type ) {
-		return {};
-	}
-
-	return reducer( state, action );
-};
-ui.hasCustomPersistence = true;
-
-export default ui;
+export default reducer;
