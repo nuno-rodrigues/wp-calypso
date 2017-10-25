@@ -16,6 +16,8 @@ import createSelector from 'lib/create-selector';
  * @param {Object} state - global redux state
  * @return {Object} current state value
  */
-const getCurrentRoute = createSelector( state => get( state, 'ui.route.path.current', null ) );
+export const getCurrentRoute = createSelector( state =>
+	get( state, 'ui.route.path.current', null )
+);
 
 export default getCurrentRoute;
