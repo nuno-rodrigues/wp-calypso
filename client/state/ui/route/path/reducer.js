@@ -11,15 +11,15 @@ import { createReducer, combineReducers } from 'state/utils';
 import { ROUTE_SET } from 'state/action-types';
 
 const initial = createReducer(
-	false,
+	'',
 	{
-		[ ROUTE_SET ]: ( state, { path } ) => ( state === false ? path : state ),
+		[ ROUTE_SET ]: ( state, { path } ) => ( state === '' ? path : state ),
 	},
 	{ type: 'string' }
 );
 
 const current = createReducer(
-	false,
+	'',
 	{
 		[ ROUTE_SET ]: ( state, { path } ) => path,
 	},
