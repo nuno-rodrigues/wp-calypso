@@ -16,8 +16,9 @@ import createSelector from 'lib/create-selector';
  * @param {Object} state - global redux state
  * @return {Object} current state value
  */
-export const getInitialQueryArguments = createSelector( state =>
-	get( state, 'ui.route.query.initial', null )
+export const getInitialQueryArguments = createSelector(
+	state => get( state, 'ui.route.query.initial', null ),
+	state => [ state.ui.route.query.initial ]
 );
 
 export default getInitialQueryArguments;

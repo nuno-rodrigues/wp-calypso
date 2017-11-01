@@ -16,8 +16,9 @@ import createSelector from 'lib/create-selector';
  * @param {Object} state - global redux state
  * @return {Object} current state value
  */
-export const getCurrentQueryArguments = createSelector( state =>
-	get( state, 'ui.route.query.current', null )
+export const getCurrentQueryArguments = createSelector(
+	state => get( state, 'ui.route.query.current', null ),
+	state => [ state.ui.route.query.current ]
 );
 
 export default getCurrentQueryArguments;

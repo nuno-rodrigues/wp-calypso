@@ -9,7 +9,6 @@ import { isEqual } from 'lodash';
 /**
  * Internal dependencies
  */
-import createSelector from 'lib/create-selector';
 import getCurrentRoute from './get-current-route';
 import getCurrentQueryArguments from 'state/selectors/get-current-query-arguments';
 
@@ -20,9 +19,7 @@ import getCurrentQueryArguments from 'state/selectors/get-current-query-argument
  * @param {Object} query - parsed object containing query parameters
  * @return {Boolean} result of the check
  */
-export const isCurrentRoute = createSelector(
-	( state, pathname, query = {} ) =>
-		pathname === getCurrentRoute( state ) && isEqual( query, getCurrentQueryArguments( state ) )
-);
+export const isCurrentRoute = ( state, pathname, query = {} ) =>
+	pathname === getCurrentRoute( state ) && isEqual( query, getCurrentQueryArguments( state ) );
 
 export default isCurrentRoute;
