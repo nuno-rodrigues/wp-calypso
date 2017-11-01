@@ -16,7 +16,6 @@ import EditorRevisionsListItem from './item';
 import { selectPostRevision } from 'state/posts/revisions/actions';
 import { getPostRevision, getPostRevisionsSelectedRevisionId } from 'state/selectors';
 import KeyboardShortcuts from 'lib/keyboard-shortcuts';
-import LoadButton from './load-button';
 
 class EditorRevisionsList extends PureComponent {
 	static propTypes = {
@@ -68,7 +67,7 @@ class EditorRevisionsList extends PureComponent {
 	};
 
 	render() {
-		const { postId, revisions, selectedRevisionId, siteId } = this.props;
+		const { revisions, selectedRevisionId } = this.props;
 		return (
 			<div className="editor-revisions-list">
 				<EditorRevisionsListHeader numRevisions={ revisions.length } />
@@ -86,7 +85,6 @@ class EditorRevisionsList extends PureComponent {
 						} ) }
 					</ul>
 				</div>
-				<LoadButton postId={ postId } selectedRevisionId={ selectedRevisionId } siteId={ siteId } />
 			</div>
 		);
 	}
