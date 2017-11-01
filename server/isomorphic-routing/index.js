@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { isEmpty, isEqual, pick } from 'lodash';
+import { isEmpty, pick } from 'lodash';
 import qs from 'qs';
 
 /**
@@ -10,8 +10,7 @@ import qs from 'qs';
 import { serverRender } from 'render';
 import { setSection as setSectionMiddlewareFactory } from '../../client/controller';
 import { setRoute as setRouteAction } from 'state/ui/actions';
-import getCurrentRoute from 'state/selectors/get-current-route';
-import { getCurrentQueryArguments } from 'state/ui/selectors';
+import isCurrentRoute from 'state/selectors/is-current-route';
 
 export function serverRouter( expressApp, setUpRoute, section ) {
 	return function( route, ...middlewares ) {
@@ -47,9 +46,7 @@ export function serverRouter( expressApp, setUpRoute, section ) {
 }
 
 function setRouteMiddleware( context, next ) {
-	const state = context.store.getState();
-
-	if ( context.pathname !== getCurrentRoute( state ) || ! isEqual( context.query, getCurrentQueryArguments( state ) ) ) {
+	if ( ! isCurrentRoute( context.store.getState(), context.pathname, context.query ) ) {
 		context.store.dispatch( setRouteAction(
 			context.pathname,
 			context.query
