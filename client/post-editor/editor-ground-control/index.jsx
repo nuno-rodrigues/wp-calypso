@@ -26,6 +26,7 @@ import HistoryButton from 'post-editor/editor-ground-control/history-button';
 
 export class EditorGroundControl extends PureComponent {
 	static propTypes = {
+		allPostsUrl: PropTypes.string,
 		hasContent: PropTypes.bool,
 		isConfirmationSidebarEnabled: PropTypes.bool,
 		confirmationSidebarStatus: PropTypes.string,

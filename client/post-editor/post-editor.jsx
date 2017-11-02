@@ -20,7 +20,6 @@ import { parse as parseUrl } from 'url';
  * Internal dependencies
  */
 import actions from 'lib/posts/actions';
-import route from 'lib/route';
 import PostEditStore from 'lib/posts/post-edit-store';
 import EditorActionBar from 'post-editor/editor-action-bar';
 import FeaturedImage from 'post-editor/editor-featured-image';
@@ -78,11 +77,13 @@ import { isWithinBreakpoint } from 'lib/viewport';
 import { isSitePreviewable, getSiteDomain } from 'state/sites/selectors';
 import EditorDiffViewer from 'post-editor/editor-diff-viewer';
 import { removep } from 'lib/formatting';
+import getAllPostsUrl from 'state/selectors/get-all-posts-url';
 
 export const PostEditor = createReactClass( {
 	displayName: 'PostEditor',
 
 	propTypes: {
+		allPostsUrl: PropTypes.string,
 		siteId: PropTypes.number,
 		preferences: PropTypes.object,
 		setEditorModePreference: PropTypes.func,
@@ -341,6 +342,7 @@ export const PostEditor = createReactClass( {
 				<EditorForbidden />
 				<div className="post-editor__inner">
 					<EditorGroundControl
+						allPostsUrl={ this.props.allPostsUrl }
 						setPostDate={ this.setPostDate }
 						hasContent={ this.state.hasContent }
 						isConfirmationSidebarEnabled={ this.props.isConfirmationSidebarEnabled }
@@ -360,7 +362,8 @@ export const PostEditor = createReactClass( {
 						userUtils={ this.props.userUtils }
 						toggleSidebar={ this.toggleSidebar }
 						onMoreInfoAboutEmailVerify={ this.onMoreInfoAboutEmailVerify }
-						allPostsUrl={ this.getAllPostsUrl() }
+						nestedSidebar={ this.state.nestedSidebar }
+						setNestedSidebar={ this.setNestedSidebar }
 						selectRevision={ this.selectRevision }
 						isSidebarOpened={ this.props.layoutFocus === 'sidebar' }
 					/>
@@ -665,34 +668,7 @@ export const PostEditor = createReactClass( {
 
 	onClose: function() {
 		// go back if we can, if not, hit all posts
-		page.back( this.getAllPostsUrl() );
-	},
-
-	getAllPostsUrl: function() {
-		const { type, selectedSite } = this.props;
-		const site = selectedSite;
-
-		let path;
-		switch ( type ) {
-			case 'page':
-				path = '/pages';
-				break;
-			case 'post':
-				path = '/posts';
-				break;
-			default:
-				path = `/types/${ type }`;
-		}
-
-		if ( type === 'post' && site && ! site.jetpack && ! site.single_user_site ) {
-			path += '/my';
-		}
-
-		if ( site ) {
-			path = route.addSiteFragment( path, site.slug );
-		}
-
-		return path;
+		page.back( this.props.allPostsUrl );
 	},
 
 	onMoreInfoAboutEmailVerify: function() {
@@ -835,7 +811,7 @@ export const PostEditor = createReactClass( {
 
 	onPreviewClose: function() {
 		if ( this.state.isPostPublishPreview ) {
-			page.back( this.getAllPostsUrl() );
+			page.back( this.props.allPostsUrl );
 		} else {
 			this.setState( {
 				showPreview: false,
@@ -1377,6 +1353,7 @@ const enhance = flow(
 				siteId,
 				postId,
 				type,
+				allPostsUrl: getAllPostsUrl( state, type ),
 				selectedSite: getSelectedSite( state ),
 				selectedSiteDomain: getSiteDomain( state, siteId ),
 				editorModePreference: getPreference( state, 'editor-mode' ),
