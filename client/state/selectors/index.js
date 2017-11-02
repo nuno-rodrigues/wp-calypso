@@ -183,7 +183,6 @@ export isAutomatedTransferFailed from './is-automated-transfer-failed';
 export isBusinessPlanUser from './is-business-plan-user';
 export isCommentsTreeInitialized from './is-comments-tree-initialized';
 export isConnectedSecondaryNetworkSite from './is-connected-secondary-network-site';
-export isCurrentRoute from './is-current-route';
 export isDeactivatingJetpackJumpstart from './is-deactivating-jetpack-jumpstart';
 export isDeactivatingJetpackModule from './is-deactivating-jetpack-module';
 export isDeletingPublicizeShareAction from './is-deleting-publicize-share-action';

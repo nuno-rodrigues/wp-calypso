@@ -4,7 +4,6 @@
 import { serverRender } from 'render';
 import { setSection as setSectionMiddlewareFactory } from '../../client/controller';
 import { setRoute as setRouteAction } from 'state/ui/actions';
-import isCurrentRoute from 'state/selectors/is-current-route';
 
 export function serverRouter( expressApp, setUpRoute, section ) {
 	return function( route, ...middlewares ) {
@@ -40,12 +39,10 @@ export function serverRouter( expressApp, setUpRoute, section ) {
 }
 
 function setRouteMiddleware( context, next ) {
-	if ( ! isCurrentRoute( context.store.getState(), context.pathname, context.query ) ) {
-		context.store.dispatch( setRouteAction(
-			context.pathname,
-			context.query
-		) );
-	}
+	context.store.dispatch( setRouteAction(
+		context.pathname,
+		context.query
+	) );
 
 	next();
 }
