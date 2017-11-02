@@ -4,8 +4,9 @@
 import ReactDomServer from 'react-dom/server';
 import superagent from 'superagent';
 import Lru from 'lru';
-import { pick } from 'lodash';
+import { isEmpty, pick } from 'lodash';
 import debugFactory from 'debug';
+import qs from 'qs';
 
 /**
  * Internal dependencies
@@ -21,9 +22,9 @@ import {
 import isRTL from 'state/selectors/is-rtl';
 import getCurrentLocaleSlug from 'state/selectors/get-current-locale-slug';
 import { reducer } from 'state';
-import { SERIALIZE } from 'state/action-types';
+import { SERIALIZE, DESERIALIZE } from 'state/action-types';
 import stateCache from 'state-cache';
-import { getCacheKey } from 'isomorphic-routing';
+import { createReduxStore } from 'state';
 
 const debug = debugFactory( 'calypso:server-render' );
 const HOUR_IN_MS = 3600000;
@@ -40,25 +41,64 @@ function bumpStat( group, name ) {
 	}
 }
 
+export function getCacheKey( context ) {
+	const pathname = context.pathname;
+
+	if ( isEmpty( context.query ) || isEmpty( context.cacheQueryKeys ) ) {
+		return pathname;
+	}
+
+	const cachedQueryParams = pick( context.query, context.cacheQueryKeys );
+
+	if ( isEmpty( cachedQueryParams ) ) {
+		return pathname;
+	}
+
+	return pathname + '?' + qs.stringify( cachedQueryParams, { sort: ( a, b ) => a.localCompare( b ) } );
+}
+
 /**
 * Render and cache supplied React element to a markup string.
 * Cache is keyed by stringified element by default.
 *
-* @param {object} element - React element to be rendered to html
+* @param {object} context - React element to be rendered to html
 * @param {string} key - (optional) custom key
 * @return {string} The rendered Layout
 */
-export function render( element, key = JSON.stringify( element ) ) {
+export function renderLayout( context ) {
 	try {
 		const startTime = Date.now();
+		const isIsomorphic = isSectionIsomorphic( context.store.getState() );
+		const key = isIsomorphic ? getCacheKey( context ) : JSON.stringify( context.layout );
+
 		debug( 'cache access for key', key );
 
 		let renderedLayout = markupCache.get( key );
 		if ( ! renderedLayout ) {
 			bumpStat( 'calypso-ssr', 'loggedout-design-cache-miss' );
 			debug( 'cache miss for key', key );
-			renderedLayout = ReactDomServer.renderToString( element );
+			renderedLayout = ReactDomServer.renderToString( context.layout );
 			markupCache.set( key, renderedLayout );
+
+			// save the state of the store with the same key as the layout
+			if ( context.store ) {
+				let reduxSubtrees = [ 'documentHead' ];
+
+				if ( isIsomorphic ) {
+					reduxSubtrees = reduxSubtrees.concat( [ 'ui', 'themes' ] );
+				}
+
+				// Send state to client
+				context.initialReduxState = pick( context.store.getState(), reduxSubtrees );
+				const serverState = reducer( context.initialReduxState, { type: SERIALIZE } );
+				stateCache.set( key, serverState );
+			}
+		} else {
+			const serializedServerState = stateCache.get( key );
+			if ( serializedServerState ) {
+				context.initialReduxState = reducer( serializedServerState, { type: DESERIALIZE } );
+				context.store = createReduxStore( context.initialReduxState );
+			}
 		}
 		const rtsTimeMs = Date.now() - startTime;
 		debug( 'Server render time (ms)', rtsTimeMs );
@@ -68,22 +108,16 @@ export function render( element, key = JSON.stringify( element ) ) {
 			bumpStat( 'calypso-ssr', 'over-100ms-rendertostring' );
 		}
 
-		return renderedLayout;
+		context.renderedLayout = renderedLayout;
 	} catch ( ex ) {
 		if ( config( 'env' ) === 'development' ) {
 			throw ex;
 		}
 	}
-	//todo: render an error?
 }
 
 export function serverRender( req, res ) {
 	const context = req.context;
-	let title, metas = [], links = [], cacheKey = false;
-
-	if ( isSectionIsomorphic( context.store.getState() ) && ! context.user ) {
-		cacheKey = getCacheKey( context );
-	}
 
 	if ( ! isDefaultLocale( context.lang ) ) {
 		context.i18nLocaleScript = '//widgets.wp.com/languages/calypso/' + context.lang + '.js';
@@ -93,35 +127,17 @@ export function serverRender( req, res ) {
 		config.isEnabled( 'server-side-rendering' ) &&
 		context.layout &&
 		! context.user &&
-		cacheKey &&
 		isDefaultLocale( context.lang )
 	) {
-		context.renderedLayout = render( context.layout, req.error ? req.error.message : cacheKey );
+		renderLayout( context );
 	}
 
-	if ( context.store ) {
-		title = getDocumentHeadFormattedTitle( context.store.getState() );
-		metas = getDocumentHeadMeta( context.store.getState() );
-		links = getDocumentHeadLink( context.store.getState() );
+	const title = getDocumentHeadFormattedTitle( context.store.getState() );
+	const metas = getDocumentHeadMeta( context.store.getState() );
+	const links = getDocumentHeadLink( context.store.getState() );
 
-		let reduxSubtrees = [ 'documentHead' ];
-
-		if ( isSectionIsomorphic( context.store.getState() ) ) {
-			reduxSubtrees = reduxSubtrees.concat( [ 'ui', 'themes' ] );
-		}
-
-		// Send state to client
-		context.initialReduxState = pick( context.store.getState(), reduxSubtrees );
-
-		// And cache on the server, too.
-		if ( cacheKey && ! stateCache.get( cacheKey ) && ! context.user ) {
-			const serverState = reducer( context.initialReduxState, { type: SERIALIZE } );
-			stateCache.set( cacheKey, serverState );
-		}
-
-		context.isRTL = isRTL( context.store.getState() );
-		context.lang = getCurrentLocaleSlug( context.store.getState() );
-	}
+	context.isRTL = isRTL( context.store.getState() );
+	context.lang = getCurrentLocaleSlug( context.store.getState() );
 
 	context.head = { title, metas, links };
 	context.config = config.ssrConfig;
