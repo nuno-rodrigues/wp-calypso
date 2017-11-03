@@ -7,18 +7,10 @@
 import { get } from 'lodash';
 
 /**
- * Internal dependencies
- */
-import createSelector from 'lib/create-selector';
-
-/**
  * Gets the last route set by a ROUTE_SET action
  * @param {Object} state - global redux state
  * @return {string} current state value
  */
-export const getCurrentRoute = createSelector(
-	state => get( state, 'ui.route.path.current', null ),
-	state => [ state.ui.route.path.current ]
-);
+export const getCurrentRoute = state => get( state, 'ui.route.path.current', null );
 
 export default getCurrentRoute;
