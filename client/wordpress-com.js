@@ -237,7 +237,7 @@ sections.push( {
 	module: 'post-editor',
 	group: 'editor',
 	secondary: true,
-	css: 'post-editor',
+	css: [ 'post-editor', 'media' ],
 } );
 
 sections.push( {

@@ -43,9 +43,22 @@ function getHashedUrl( filename ) {
 }
 
 function getCssUrls( css ) {
+	const leftToRightCSS = [];
+	const rightToLeftCSS = [];
+
+	if ( Array.isArray( css ) ) {
+		css.map( cssSection => {
+			leftToRightCSS.push( getHashedUrl( 'sections/' + cssSection + '.css' ) );
+			rightToLeftCSS.push( getHashedUrl( 'sections-rtl/' + cssSection + '.css' ) );
+		} );
+	} else {
+		leftToRightCSS.push( getHashedUrl( 'sections/' + css + '.css' ) );
+		rightToLeftCSS.push( getHashedUrl( 'sections-rtl/' + css + '.rtl.css' ) );
+	}
+
 	return {
-		ltr: getHashedUrl( 'sections/' + css + '.css' ),
-		rtl: getHashedUrl( 'sections-rtl/' + css + '.rtl.css' ),
+		ltr: leftToRightCSS,
+		rtl: rightToLeftCSS
 	};
 }
 
