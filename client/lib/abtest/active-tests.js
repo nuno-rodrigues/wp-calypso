@@ -118,12 +118,13 @@ export default {
 		localeTargets: 'any',
 	},
 	showNewPaymentMethods: {
-		datestamp: '20171101',
+		datestamp: '20171113',
 		variations: {
 			hide: 50,
 			show: 50,
 		},
 		defaultVariation: 'hide',
 		allowExistingUsers: true,
+		countryCodeTargets: [ 'DE', 'BE' ],
 	},
 };
