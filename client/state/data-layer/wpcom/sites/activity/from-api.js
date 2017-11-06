@@ -28,6 +28,55 @@ export function transformer( apiResponse ) {
 	return map( orderedItems, processItem );
 }
 
+const getActivityDescription = item => {
+	const { actor, generator, object } = item;
+
+	switch ( item.name ) {
+		case 'post__published':
+			return (
+				`<em>${ actor.name }</em> published post ` +
+				`<a href="/read/blogs/${ generator.blog_id }/posts/` +
+				`${ object.object_id }">${ object.name }</a>`
+			);
+
+		case 'plugin__deleted':
+			return (
+				`<em>${ actor.name }</em> deleted plugin ` +
+				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a>`
+			);
+
+		case 'plugin__installed':
+			return (
+				`<em>${ actor.name }</em> installed plugin ` +
+				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a> (${ object.object_version })`
+			);
+
+		case 'user__deleted':
+			return (
+				`<em>${ actor.name }</em> removed ` +
+				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
+				`${ object.name }</a> from site.`
+			);
+
+		case 'user__registered':
+			return (
+				`<em>${ actor.name }</em> added user ` +
+				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
+				`${ object.name }</a> to site.`
+			);
+
+		case 'user__updated':
+			return (
+				`<em>${ actor.name }</em> modified user ` +
+				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
+				`${ object.name }</a> to site.`
+			);
+
+		default:
+			return item.summary || '';
+	}
+};
+
 /**
  * Takes an Activity item in the API format and returns a processed Activity item for use in UI
  *
@@ -59,6 +108,7 @@ export function processItem( item ) {
 		activityTargetTs: get( item, 'object.target_ts', undefined ),
 		activityTitle: get( item, 'summary', '' ),
 		activityTs: Date.parse( published ),
+		activityDescription: getActivityDescription( item ),
 	};
 }
 

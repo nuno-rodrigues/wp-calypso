@@ -95,7 +95,14 @@ class ActivityLogItem extends Component {
 				<ActivityActor
 					{ ...pick( log, [ 'actorAvatarUrl', 'actorName', 'actorRole', 'actorType' ] ) }
 				/>
-				<div className="activity-log-item__title">{ log.activityTitle }</div>
+				{ log.activityDescription ? (
+					<div
+						className="activity-log-item__description"
+						dangerouslySetInnerHTML={ { __html: log.activityDescription } } // eslint-disable-line react/no-danger
+					/>
+				) : (
+					<div className="activity-log-item__title">{ log.activityTitle }</div>
+				) }
 			</div>
 		);
 	}
