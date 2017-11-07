@@ -25,3 +25,5 @@ export const watermarks = keyedReducer(
 );
 
 watermarks.hasCustomPersistence = true;
+
+export default watermarks;
