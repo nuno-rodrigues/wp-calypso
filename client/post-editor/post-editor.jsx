@@ -7,9 +7,8 @@ import createReactClass from 'create-react-class';
 import ReactDom from 'react-dom';
 import page from 'page';
 import PropTypes from 'prop-types';
-import { debounce, flow, get, throttle } from 'lodash';
+import { debounce, flow, get, partial, throttle } from 'lodash';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 import { localize } from 'i18n-calypso';
 import classNames from 'classnames';
 import tinyMce from 'tinymce/tinymce';
@@ -1396,26 +1395,21 @@ const enhance = flow(
 				nestedSidebarTarget: getNestedSidebarTarget( state ),
 			};
 		},
-		dispatch => {
-			return bindActionCreators(
-				{
-					setEditorLastDraft,
-					resetEditorLastDraft,
-					receivePost,
-					editPost,
-					savePostSuccess,
-					setEditorModePreference: savePreference.bind( null, 'editor-mode' ),
-					setEditorSidebar: savePreference.bind( null, 'editor-sidebar' ),
-					setLayoutFocus,
-					setNextLayoutFocus,
-					saveConfirmationSidebarPreference,
-					recordTracksEvent,
-					setNestedSidebar,
-					closeEditorSidebar,
-					openEditorSidebar,
-				},
-				dispatch
-			);
+		{
+			setEditorLastDraft,
+			resetEditorLastDraft,
+			receivePost,
+			editPost,
+			savePostSuccess,
+			setEditorModePreference: partial( savePreference, 'editor-mode' ),
+			setEditorSidebar: partial( savePreference, 'editor-sidebar' ),
+			setLayoutFocus,
+			setNextLayoutFocus,
+			saveConfirmationSidebarPreference,
+			recordTracksEvent,
+			setNestedSidebar,
+			closeEditorSidebar,
+			openEditorSidebar,
 		},
 		null,
 		{ pure: false }
