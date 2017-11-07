@@ -16,12 +16,9 @@ import Main from 'components/main';
 import LoggedOutFormLinks from 'components/logged-out-form/links';
 import {
 	getAuthorizationData,
-	getAuthorizationRemoteSite,
-	isCalypsoStartedConnection,
 	hasXmlrpcError,
 	hasExpiredSecretError,
 	isRemoteSiteOnSitesList,
-	getAuthAttempts,
 	getSiteIdFromQueryObject,
 	getUserAlreadyConnected,
 } from 'state/jetpack-connect/selectors';
@@ -32,14 +29,11 @@ import { isRequestingSites, isRequestingSite } from 'state/sites/selectors';
 import MainWrapper from './main-wrapper';
 import HelpButton from './help-button';
 import JetpackConnectHappychatButton from './happychat-button';
-import { urlToSlug } from 'lib/url';
 import LoggedInForm from './auth-logged-in-form';
 import LoggedOutForm from './auth-logged-out-form';
 
 class JetpackConnectAuthorizeForm extends Component {
 	static propTypes = {
-		authAttempts: PropTypes.number,
-		calypsoStartedConnection: PropTypes.bool,
 		isAlreadyOnSitesList: PropTypes.bool,
 		isFetchingAuthorizationSite: PropTypes.bool,
 		isFetchingSites: PropTypes.bool,
@@ -50,10 +44,9 @@ class JetpackConnectAuthorizeForm extends Component {
 			} ),
 		} ).isRequired,
 		recordTracksEvent: PropTypes.func,
-		setTracksAnonymousUserId: PropTypes.func,
 		requestHasExpiredSecretError: PropTypes.func,
 		requestHasXmlrpcError: PropTypes.func,
-		siteSlug: PropTypes.string,
+		setTracksAnonymousUserId: PropTypes.func,
 		user: PropTypes.object,
 	};
 
@@ -142,22 +135,17 @@ export { JetpackConnectAuthorizeForm as JetpackConnectAuthorizeFormTestComponent
 
 export default connect(
 	state => {
-		const remoteSiteUrl = getAuthorizationRemoteSite( state );
-		const siteSlug = urlToSlug( remoteSiteUrl );
 		const requestHasExpiredSecretError = () => hasExpiredSecretError( state );
 		const requestHasXmlrpcError = () => hasXmlrpcError( state );
 		const siteId = getSiteIdFromQueryObject( state );
 
 		return {
-			authAttempts: getAuthAttempts( state, siteSlug ),
-			calypsoStartedConnection: isCalypsoStartedConnection( state, remoteSiteUrl ),
 			isAlreadyOnSitesList: isRemoteSiteOnSitesList( state ),
 			isFetchingAuthorizationSite: isRequestingSite( state, siteId ),
 			isFetchingSites: isRequestingSites( state ),
 			jetpackConnectAuthorize: getAuthorizationData( state ),
 			requestHasExpiredSecretError,
 			requestHasXmlrpcError,
-			siteSlug,
 			user: getCurrentUser( state ),
 			userAlreadyConnected: getUserAlreadyConnected( state ),
 		};

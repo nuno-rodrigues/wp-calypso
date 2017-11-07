@@ -36,12 +36,18 @@ import { externalRedirect } from 'lib/route/path';
 import { getJetpackConnectRedirectAfterAuth } from 'state/selectors';
 import { login } from 'lib/paths';
 import { recordTracksEvent as recordTracksEventAction } from 'state/analytics/actions';
+import { urlToSlug } from 'lib/url';
 import {
 	authorize as authorizeAction,
 	goBackToWpAdmin as goBackToWpAdminAction,
 	goToXmlrpcErrorFallbackUrl as goToXmlrpcErrorFallbackUrlAction,
 	retryAuth as retryAuthAction,
 } from 'state/jetpack-connect/actions';
+import {
+	getAuthAttempts,
+	getAuthorizationRemoteSite,
+	isCalypsoStartedConnection,
+} from 'state/jetpack-connect/selectors';
 
 /**
  * Constants
@@ -52,11 +58,9 @@ const debug = debugModule( 'calypso:jetpack-connect:authorize-form' );
 
 class LoggedInForm extends Component {
 	static propTypes = {
-		authAttempts: PropTypes.number.isRequired,
-		calypsoStartedConnection: PropTypes.bool,
 		isAlreadyOnSitesList: PropTypes.bool,
-		isFetchingSites: PropTypes.bool,
 		isFetchingAuthorizationSite: PropTypes.bool,
+		isFetchingSites: PropTypes.bool,
 		isSSO: PropTypes.bool,
 		isWoo: PropTypes.bool,
 		jetpackConnectAuthorize: PropTypes.shape( {
@@ -73,16 +77,18 @@ class LoggedInForm extends Component {
 		} ).isRequired,
 		requestHasExpiredSecretError: PropTypes.func.isRequired,
 		requestHasXmlrpcError: PropTypes.func.isRequired,
-		siteSlug: PropTypes.string.isRequired,
 		user: PropTypes.object.isRequired,
 
 		// Connected props
+		authAttempts: PropTypes.number.isRequired,
 		authorize: PropTypes.func.isRequired,
+		calypsoStartedConnection: PropTypes.bool,
 		goBackToWpAdmin: PropTypes.func.isRequired,
 		goToXmlrpcErrorFallbackUrl: PropTypes.func.isRequired,
 		recordTracksEvent: PropTypes.func.isRequired,
 		redirectAfterAuth: PropTypes.string,
 		retryAuth: PropTypes.func.isRequired,
+		siteSlug: PropTypes.string.isRequired,
 		translate: PropTypes.func.isRequired,
 	};
 
@@ -553,9 +559,17 @@ class LoggedInForm extends Component {
 }
 
 export default connect(
-	state => ( {
-		redirectAfterAuth: getJetpackConnectRedirectAfterAuth( state ),
-	} ),
+	state => {
+		const remoteSiteUrl = getAuthorizationRemoteSite( state );
+		const siteSlug = urlToSlug( remoteSiteUrl );
+
+		return {
+			authAttempts: getAuthAttempts( state, siteSlug ),
+			calypsoStartedConnection: isCalypsoStartedConnection( state, remoteSiteUrl ),
+			redirectAfterAuth: getJetpackConnectRedirectAfterAuth( state ),
+			siteSlug,
+		};
+	},
 	{
 		authorize: authorizeAction,
 		goBackToWpAdmin: goBackToWpAdminAction,
