@@ -81,6 +81,7 @@ class LoggedInForm extends Component {
 		goBackToWpAdmin: PropTypes.func.isRequired,
 		goToXmlrpcErrorFallbackUrl: PropTypes.func.isRequired,
 		recordTracksEvent: PropTypes.func.isRequired,
+		redirectAfterAuth: PropTypes.string,
 		retryAuth: PropTypes.func.isRequired,
 		translate: PropTypes.func.isRequired,
 	};
