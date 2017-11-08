@@ -268,7 +268,7 @@ function createEbanxToken( requestType, cardDetails, callback ) {
 
 				EBANX.config.setMode( configuration.environment );
 				EBANX.config.setPublishableKey( configuration.public_key );
-				EBANX.config.setCountry( 'br' ); // TODO: more countries, pass from config?
+				EBANX.config.setCountry( cardDetails.country.toLowerCase() );
 
 				const parameters = getEbanxParameters( cardDetails );
 				EBANX.card.createToken( parameters, createTokenCallback );
