@@ -40,7 +40,7 @@ class EditorRevisionsList extends PureComponent {
 
 	componentWillReceiveProps( { selectedRevisionId } ) {
 		if ( ! selectedRevisionId || ! this.props.selectedRevisionId ) {
-			this.trySelectingFirstRevision();
+			setTimeout( this.trySelectingFirstRevision, 300 );
 		}
 	}
 
