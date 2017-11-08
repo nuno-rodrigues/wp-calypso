@@ -1,5 +1,5 @@
 /**
- * Eternal dependencies
+ * External dependencies
  *
  * @format
  */
