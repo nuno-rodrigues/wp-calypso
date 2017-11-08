@@ -47,6 +47,7 @@ import {
 	getAuthAttempts,
 	getAuthorizationRemoteSite,
 	isCalypsoStartedConnection,
+	isRemoteSiteOnSitesList,
 } from 'state/jetpack-connect/selectors';
 
 /**
@@ -58,7 +59,6 @@ const debug = debugModule( 'calypso:jetpack-connect:authorize-form' );
 
 class LoggedInForm extends Component {
 	static propTypes = {
-		isAlreadyOnSitesList: PropTypes.bool,
 		isFetchingAuthorizationSite: PropTypes.bool,
 		isFetchingSites: PropTypes.bool,
 		isSSO: PropTypes.bool,
@@ -85,6 +85,7 @@ class LoggedInForm extends Component {
 		calypsoStartedConnection: PropTypes.bool,
 		goBackToWpAdmin: PropTypes.func.isRequired,
 		goToXmlrpcErrorFallbackUrl: PropTypes.func.isRequired,
+		isAlreadyOnSitesList: PropTypes.bool,
 		recordTracksEvent: PropTypes.func.isRequired,
 		redirectAfterAuth: PropTypes.string,
 		retryAuth: PropTypes.func.isRequired,
@@ -566,6 +567,7 @@ export default connect(
 		return {
 			authAttempts: getAuthAttempts( state, siteSlug ),
 			calypsoStartedConnection: isCalypsoStartedConnection( state, remoteSiteUrl ),
+			isAlreadyOnSitesList: isRemoteSiteOnSitesList( state ),
 			redirectAfterAuth: getJetpackConnectRedirectAfterAuth( state ),
 			siteSlug,
 		};
