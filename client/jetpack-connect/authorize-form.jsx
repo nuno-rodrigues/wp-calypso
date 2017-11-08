@@ -18,13 +18,12 @@ import {
 	getAuthorizationData,
 	hasXmlrpcError,
 	hasExpiredSecretError,
-	getSiteIdFromQueryObject,
 	getUserAlreadyConnected,
 } from 'state/jetpack-connect/selectors';
 import { getCurrentUser } from 'state/current-user/selectors';
 import { recordTracksEvent, setTracksAnonymousUserId } from 'state/analytics/actions';
 import EmptyContent from 'components/empty-content';
-import { isRequestingSites, isRequestingSite } from 'state/sites/selectors';
+import { isRequestingSites } from 'state/sites/selectors';
 import MainWrapper from './main-wrapper';
 import HelpButton from './help-button';
 import JetpackConnectHappychatButton from './happychat-button';
@@ -33,7 +32,6 @@ import LoggedOutForm from './auth-logged-out-form';
 
 class JetpackConnectAuthorizeForm extends Component {
 	static propTypes = {
-		isFetchingAuthorizationSite: PropTypes.bool,
 		isFetchingSites: PropTypes.bool,
 		jetpackConnectAuthorize: PropTypes.shape( {
 			queryObject: PropTypes.shape( {
@@ -131,10 +129,8 @@ export default connect(
 	state => {
 		const requestHasExpiredSecretError = () => hasExpiredSecretError( state );
 		const requestHasXmlrpcError = () => hasXmlrpcError( state );
-		const siteId = getSiteIdFromQueryObject( state );
 
 		return {
-			isFetchingAuthorizationSite: isRequestingSite( state, siteId ),
 			isFetchingSites: isRequestingSites( state ),
 			jetpackConnectAuthorize: getAuthorizationData( state ),
 			requestHasExpiredSecretError,
