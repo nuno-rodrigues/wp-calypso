@@ -29,47 +29,47 @@ export function transformer( apiResponse ) {
 }
 
 const getActivityDescription = item => {
-	const { actor, generator, object } = item;
+	const { generator, object } = item;
 
 	switch ( item.name ) {
 		case 'post__published':
 			return (
-				`<em>${ actor.name }</em> published post ` +
 				`<a href="/read/blogs/${ generator.blog_id }/posts/` +
-				`${ object.object_id }">${ object.name }</a>`
+				`${ object.object_id }">${ object.name }</a>` +
+				'<div class="activity-log-item__event">Post published</div>'
 			);
 
 		case 'plugin__deleted':
 			return (
-				`<em>${ actor.name }</em> deleted plugin ` +
-				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a>`
+				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a>` +
+				'<div class="activity-log-item__event">Plugin deleted</div>'
 			);
 
 		case 'plugin__installed':
 			return (
-				`<em>${ actor.name }</em> installed plugin ` +
-				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a> (${ object.object_version })`
+				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a> (${ object.object_version })` +
+				'<div class="activity-log-item__event">Plugin installed</div>'
 			);
 
 		case 'user__deleted':
 			return (
-				`<em>${ actor.name }</em> removed ` +
 				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a> from site.`
+				`${ object.name }</a>` +
+				'<div class="activity-log-item__event">User removed</div>'
 			);
 
 		case 'user__registered':
 			return (
-				`<em>${ actor.name }</em> added user ` +
 				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a> to site.`
+				`${ object.name }</a>` +
+				'<div class="activity-log-item__event">User added</div>'
 			);
 
 		case 'user__updated':
 			return (
-				`<em>${ actor.name }</em> modified user ` +
 				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a> to site.`
+				`${ object.name }</a> is now an Administrator` +
+				'<div class="activity-log-item__event">User modified</div>'
 			);
 
 		default:
