@@ -42,16 +42,17 @@ export class CommentHeader extends PureComponent {
 
 				{ showAuthorMoreInfo && <CommentAuthorMoreInfo { ...{ commentId } } /> }
 
-				{ ! isBulkMode && (
-					<Button
-						borderless
-						className="comment__toggle-expanded"
-						disabled={ isEditMode }
-						onClick={ toggleExpanded }
-					>
-						<Gridicon icon="chevron-down" />
-					</Button>
-				) }
+				{ ! isBulkMode &&
+					isPostView && (
+						<Button
+							borderless
+							className="comment__toggle-expanded"
+							disabled={ isEditMode }
+							onClick={ toggleExpanded }
+						>
+							<Gridicon icon="chevron-down" />
+						</Button>
+					) }
 			</div>
 		);
 	}

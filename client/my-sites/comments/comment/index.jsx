@@ -42,9 +42,10 @@ export class Comment extends Component {
 	};
 
 	componentWillReceiveProps( nextProps ) {
-		if ( nextProps.isBulkMode && ! this.props.isBulkMode ) {
-			this.setState( { isExpanded: false } );
-		}
+		const isExpanded = nextProps.isPostView
+			? ! ( ! this.props.isPostView || this.props.isBulkMode !== nextProps.isBulkMode )
+			: ! nextProps.isLoading && ! nextProps.isBulkMode;
+		this.setState( { isExpanded } );
 	}
 
 	storeCardRef = card => ( this.commentCard = card );
