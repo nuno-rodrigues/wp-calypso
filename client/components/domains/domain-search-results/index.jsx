@@ -82,28 +82,27 @@ class DomainSearchResults extends React.Component {
 					onButtonClick={ this.props.onClickResult }
 				/>
 			);
-		} else if (
-			suggestions.length !== 0 &&
-			includes( [ MAPPABLE, UNKNOWN ], lastDomainStatus ) &&
-			this.props.products.domain_map
-		) {
-			let components = { a: <a href="#" onClick={ this.handleAddMapping } />, small: <small /> };
+		} else if ( suggestions.length !== 0 && this.props.products.domain_map ) {
+			let components;
+			if ( includes( [ MAPPABLE, UNKNOWN ], lastDomainStatus ) ) {
+				components = { a: <a href="#" onClick={ this.handleAddMapping } />, small: <small /> };
 
-			if ( isNextDomainFree( this.props.cart ) ) {
-				offer = translate(
-					'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} for free.{{/small}}',
-					{ args: { domain }, components }
-				);
-			} else if ( ! this.props.domainsWithPlansOnly || this.props.isSiteOnPaidPlan ) {
-				offer = translate(
-					'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} for %(cost)s.{{/small}}',
-					{ args: { domain, cost: this.props.products.domain_map.cost_display }, components }
-				);
-			} else {
-				offer = translate(
-					'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} with WordPress.com Premium.{{/small}}',
-					{ args: { domain }, components }
-				);
+				if ( isNextDomainFree( this.props.cart ) ) {
+					offer = translate(
+						'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} for free.{{/small}}',
+						{ args: { domain }, components }
+					);
+				} else if ( ! this.props.domainsWithPlansOnly || this.props.isSiteOnPaidPlan ) {
+					offer = translate(
+						'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} for %(cost)s.{{/small}}',
+						{ args: { domain, cost: this.props.products.domain_map.cost_display }, components }
+					);
+				} else {
+					offer = translate(
+						'{{small}}If you purchased %(domain)s elsewhere, you can {{a}}map it{{/a}} with WordPress.com Premium.{{/small}}',
+						{ args: { domain }, components }
+					);
+				}
 			}
 
 			if ( this.props.transferInAllowed ) {
