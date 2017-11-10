@@ -27,6 +27,8 @@ import {
 	REWIND_BACKUP_PROGRESS_REQUEST,
 	REWIND_BACKUP_UPDATE_ERROR,
 	REWIND_BACKUP_UPDATE_PROGRESS,
+	REWIND_BACKUP_LIST,
+	REWIND_BACKUP_LIST_UPDATE,
 } from 'state/action-types';
 
 /**
@@ -303,5 +305,35 @@ export function rewindBackupUpdateError( siteId, error ) {
 		type: REWIND_BACKUP_UPDATE_ERROR,
 		siteId,
 		error,
+	};
+}
+
+/**
+ * Check backups for a given site.
+ *
+ * @param  {string|number} siteId The site ID
+ * @return {object}               Action object
+ */
+export function getRewindBackups( siteId ) {
+	return {
+		type: REWIND_BACKUP_LIST,
+		siteId,
+	};
+}
+
+/**
+ * Update with last backup created.
+ *
+ * @param  {string|number} siteId       The site ID
+ * @param  {number}        downloadId   Id of the last backup created.
+ * @param  {object}        downloadData Information about the downloadable backup.
+ * @return {object}                     Action object
+ */
+export function updateRewindBackups( siteId, downloadId, downloadData ) {
+	return {
+		type: REWIND_BACKUP_LIST_UPDATE,
+		...downloadData,
+		siteId,
+		downloadId,
 	};
 }
