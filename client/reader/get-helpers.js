@@ -1,14 +1,14 @@
 /** @format */
 /**
- * External Dependencies
+ * External dependencies
  */
-import url from 'url';
 import { translate } from 'i18n-calypso';
-import { trim } from 'lodash';
 import i18n from 'i18n-calypso';
+import { trim } from 'lodash';
+import url from 'url';
 
 /**
- * Internal Dependencies
+ * Internal dependencies
  */
 import { decodeEntities } from 'lib/formatting';
 import { isSiteDescriptionBlacklisted } from 'reader/lib/site-description-blacklist';

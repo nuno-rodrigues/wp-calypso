@@ -2,19 +2,19 @@
 /**
  * External dependencies
  */
-import React from 'react';
-import PropTypes from 'prop-types';
-import { localize } from 'i18n-calypso';
 import Gridicon from 'gridicons';
+import { localize } from 'i18n-calypso';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
  */
 import QueryPreferences from 'components/data/query-preferences';
+import { recordTrack } from 'reader/stats';
 import { savePreference } from 'state/preferences/actions';
 import { getPreference } from 'state/preferences/selectors';
-import { recordTrack } from 'reader/stats';
 
 const getPreferenceName = isInternal =>
 	isInternal ? 'has_used_reader_conversations_a8c' : 'has_used_reader_conversations';

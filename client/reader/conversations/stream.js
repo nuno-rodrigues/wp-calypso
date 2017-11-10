@@ -1,17 +1,17 @@
 /** @format */
 /**
- * External Dependencies
+ * External dependencies
  */
-import React from 'react';
 import { get } from 'lodash';
+import React from 'react';
 
 /**
- * Internal Dependencies
+ * Internal dependencies
  */
-import Stream from 'reader/stream';
-import DocumentHead from 'components/data/document-head';
 import ConversationsIntro from './intro';
 import ConversationsEmptyContent from 'blocks/conversations/empty';
+import DocumentHead from 'components/data/document-head';
+import Stream from 'reader/stream';
 
 export default function( props ) {
 	const isInternal = get( props, 'store.id' ) === 'conversations-a8c';

@@ -2,12 +2,16 @@
 /**
  * External dependencies
  */
+import { localize } from 'i18n-calypso';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { localize } from 'i18n-calypso';
+
+/**
+ * Internal dependencies
+ */
 import SectionNav from 'components/section-nav';
-import NavTabs from 'components/section-nav/tabs';
 import NavItem from 'components/section-nav/item';
+import NavTabs from 'components/section-nav/tabs';
 
 class RecommendedNavigation extends React.Component {
 	static propTypes = { selected: PropTypes.oneOf( [ 'for-you', 'sites', 'tags' ] ).isRequired };

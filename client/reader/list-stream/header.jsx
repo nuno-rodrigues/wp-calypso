@@ -2,18 +2,18 @@
 /**
  * External dependencies
  */
+import classnames from 'classnames';
+import Gridicon from 'gridicons';
+import { localize } from 'i18n-calypso';
 import PropTypes from 'prop-types';
 import React from 'react';
-import classnames from 'classnames';
-import { localize } from 'i18n-calypso';
-import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
  */
+import FollowButton from 'blocks/follow-button/button';
 import Card from 'components/card';
 import { isExternal } from 'lib/url';
-import FollowButton from 'blocks/follow-button/button';
 
 const ListStreamHeader = ( {
 	isPlaceholder,

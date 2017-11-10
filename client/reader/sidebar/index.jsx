@@ -12,6 +12,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import store from 'store';
+import url from 'url';
 
 /**
  * Internal dependencies
@@ -42,7 +43,6 @@ import { getSubscribedLists } from 'state/reader/lists/selectors';
 import { getReaderTeams } from 'state/selectors';
 import { setNextLayoutFocus } from 'state/ui/layout-focus/actions';
 import { toggleReaderSidebarLists, toggleReaderSidebarTags } from 'state/ui/reader/sidebar/actions';
-import url from 'url';
 
 export const ReaderSidebar = createReactClass( {
 	displayName: 'ReaderSidebar',

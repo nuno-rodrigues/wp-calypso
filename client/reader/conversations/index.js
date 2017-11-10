@@ -7,8 +7,8 @@ import page from 'page';
 /**
  * Internal dependencies
  */
-import config from 'config';
 import { conversations, conversationsA8c } from './controller';
+import config from 'config';
 import { initAbTests, preloadReaderBundle, sidebar, updateLastRoute } from 'reader/controller';
 
 export default function() {
