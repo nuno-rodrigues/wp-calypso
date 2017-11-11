@@ -9,8 +9,9 @@ import { get, identity, merge, noop, uniqueId } from 'lodash';
 /**
  * Internal dependencies
  */
-import config from 'config';
+import { combineReducers, keyedReducer } from 'state/utils';
 import warn from 'lib/warn';
+
 /**
  * Returns response data from an HTTP request success action if available
  *
@@ -96,11 +97,11 @@ export const makeParser = ( schema, schemaOptions = {}, transformer = identity )
 };
 
 const getRequestStatus = action => {
-	if ( getError( action ) ) {
+	if ( undefined !== getError( action ) ) {
 		return 'failure';
 	}
 
-	if ( getData( action ) ) {
+	if ( undefined !== getData( action ) ) {
 		return 'success';
 	}
 
@@ -112,6 +113,23 @@ export const getActionKey = fullAction => {
 
 	return deterministicStringify( action );
 };
+
+export const getRequests = ( state, key ) => state.dataRequests.requests[ key ] || {};
+export const getRequestIds = ( state, requestId ) =>
+	state.dataRequests.requestMap[ requestId ] || {};
+
+export const requestsReducerItem = ( state = null, { type, requestInfo } ) =>
+	'DATA_REQUEST_TRACK' === type ? { ...state, ...requestInfo } : state;
+
+export const requestsReducer = keyedReducer( 'key', requestsReducerItem );
+
+export const requestIdsReducer = ( state = {}, { type, requestId, key } ) =>
+	'DATA_REQUEST_MAP_ID' === type ? { ...state, [ requestId ]: key } : state;
+
+export const reducer = combineReducers( {
+	requests: requestsReducer,
+	requestMap: requestIdsReducer,
+} );
 
 /**
  * Tracks the state of network activity for a given request type
@@ -130,11 +148,9 @@ export const getActionKey = fullAction => {
  * here operating on the _REQUEST actions and not in the HTTP
  * pipeline as a processor on HTTP_REQUEST actions.
  *
- * @param {Map} requests stores request meta data; must be Map-like with set/get
- * @param {Map} requestIds tracks requests by unique ids
  * @returns {Function} middleware function to track requests
  */
-export const trackRequests = ( requests, requestIds ) => next => ( store, action ) => {
+export const trackRequests = next => ( store, action ) => {
 	// progress events don't affect
 	// any tracking meta at the moment
 	if ( getProgress( action ) ) {
@@ -143,7 +159,7 @@ export const trackRequests = ( requests, requestIds ) => next => ( store, action
 
 	const actionKey = getActionKey( action );
 	const status = getRequestStatus( action );
-	const meta = requests.get( actionKey ) || {};
+	const meta = getRequests( store.getState(), actionKey );
 	const requestId = get( action, 'meta.dataLayer.requestId' ) || uniqueId( 'data-request-' );
 
 	const nextMeta = Object.assign(
@@ -157,52 +173,36 @@ export const trackRequests = ( requests, requestIds ) => next => ( store, action
 	);
 
 	// update the meta
-	requests.set( actionKey, nextMeta );
+	store.dispatch( {
+		type: 'DATA_REQUEST_TRACK',
+		key: actionKey,
+		requestInfo: nextMeta,
+	} );
 
 	// update the request mapping
 	// the returning action could be
 	// different than the first one
 	// which originated the request
 	if ( 'pending' === status ) {
-		requestIds.set( requestId, actionKey );
+		store.dispatch( {
+			type: 'DATA_REQUEST_MAP_ID',
+			requestId,
+			key: actionKey,
+		} );
 	} else {
-		const firstKey = requestIds.get( requestId );
+		const firstKey = getRequestIds( store.getState(), requestId );
 
 		if ( firstKey && firstKey !== actionKey ) {
-			requests.set( firstKey, nextMeta );
+			store.dispatch( {
+				type: 'DATA_REQUEST_TRACK',
+				key: firstKey,
+				requestInfo: nextMeta,
+			} );
 		}
 	}
 
 	next( store, merge( action, { meta: { dataLayer: { requestId } } } ) );
 };
-
-/** @type Map stores meta data about data request **/
-const requestsMeta = new Map();
-const requestsIds = new Map();
-
-if ( 'development' === config( 'env_id' ) && typeof window === 'object' ) {
-	window.dataRequests = requestsMeta;
-	window.dataRequestIds = requestsIds;
-}
-
-/**
- * Builds a function to return request meta (used for testing)
- *
- * @see getRequestMeta
- *
- * @param {Map} requests stores request meta data; must be Map-like with set/get
- * @returns {Function} actually gets request meta given an action
- */
-export const requestMetaGetter = requests => action => requests.get( getActionKey( action ) );
-
-/**
- * Returns known information about a given data request
- *
- * @type {Function}
- * @param {Object} action data _REQUEST Redux action
- * @returns {Object} meta information about a data request
- */
-export const getRequestMeta = requestMetaGetter( requestsMeta );
 
 /**
  * @type Object default dispatchRequest options
@@ -212,7 +212,7 @@ export const getRequestMeta = requestMetaGetter( requestsMeta );
  */
 const defaultOptions = {
 	fromApi: identity,
-	middleware: trackRequests( requestsMeta, requestsIds ),
+	middleware: trackRequests,
 	onProgress: noop,
 };
 
