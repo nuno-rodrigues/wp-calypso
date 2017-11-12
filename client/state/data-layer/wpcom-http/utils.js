@@ -131,6 +131,11 @@ export const reducer = combineReducers( {
 	requestMap: requestIdsReducer,
 } );
 
+export const isRequestLoading = ( state, action ) =>
+	getRequests( state, getActionKey( action ) ).status === 'pending';
+export const hasRequestLoaded = ( state, action ) =>
+	getRequests( state, getActionKey( action ) ).lastUpdated > -Infinity;
+
 /**
  * Tracks the state of network activity for a given request type
  *
