@@ -10,10 +10,6 @@
 
 .editor-revisions-list__loading-placeholder {
 	@include placeholder(23%);
-	/*	button, input, select {
-		cursor: default;
-		pointer-events: none;
-	}*/
 }
 
 body.showing-post-revisions-dialog {
@@ -21,7 +17,7 @@ body.showing-post-revisions-dialog {
 	overflow-y: hidden;
 
 	.dialog.card {
-		@include breakpoint( "<660px" ) {
+		@include breakpoint( '<660px' ) {
 			max-width: 100%;
 			max-height: 100%;
 		}
