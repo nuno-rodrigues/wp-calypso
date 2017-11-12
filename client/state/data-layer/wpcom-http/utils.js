@@ -4,12 +4,12 @@
  */
 import deterministicStringify from 'json-stable-stringify';
 import schemaValidator from 'is-my-json-valid';
-import { get, identity, merge, noop, uniqueId } from 'lodash';
+import { get, identity, merge, noop } from 'lodash';
 
 /**
  * Internal dependencies
  */
-import { combineReducers, keyedReducer } from 'state/utils';
+import { keyedReducer } from 'state/utils';
 import warn from 'lib/warn';
 
 /**
@@ -110,26 +110,19 @@ const getRequestStatus = action => {
 
 export const getActionKey = fullAction => {
 	const { meta, ...action } = fullAction; // eslint-disable-line no-unused-vars
+	const requestKey = get( meta, 'dataLayer.requestKey' );
 
-	return deterministicStringify( action );
+	return requestKey ? requestKey : deterministicStringify( action );
 };
 
-export const getRequests = ( state, key ) => state.dataRequests.requests[ key ] || {};
-export const getRequestIds = ( state, requestId ) =>
-	state.dataRequests.requestMap[ requestId ] || {};
+export const getRequests = ( state, key ) => state.dataRequests[ key ] || {};
 
-export const requestsReducerItem = ( state = null, { type, requestInfo } ) =>
-	'DATA_REQUEST_TRACK' === type ? { ...state, ...requestInfo } : state;
+export const requestsReducerItem = (
+	state = null,
+	{ meta: { dataLayer: { lastUpdated, status } = {} } = {} }
+) => Object.assign( { status }, lastUpdated && { lastUpdated } );
 
-export const requestsReducer = keyedReducer( 'key', requestsReducerItem );
-
-export const requestIdsReducer = ( state = {}, { type, requestId, key } ) =>
-	'DATA_REQUEST_MAP_ID' === type ? { ...state, [ requestId ]: key } : state;
-
-export const reducer = combineReducers( {
-	requests: requestsReducer,
-	requestMap: requestIdsReducer,
-} );
+export const reducer = keyedReducer( 'meta.dataLayer.requestKey', requestsReducerItem );
 
 export const isRequestLoading = ( state, action ) =>
 	getRequests( state, getActionKey( action ) ).status === 'pending';
@@ -163,51 +156,16 @@ export const trackRequests = next => ( store, action ) => {
 		return next( store, action );
 	}
 
-	const actionKey = getActionKey( action );
+	const requestKey = getActionKey( action );
 	const status = getRequestStatus( action );
-	const meta = getRequests( store.getState(), actionKey );
-	const requestId = get( action, 'meta.dataLayer.requestId' ) || uniqueId( 'data-request-' );
-
-	const nextMeta = Object.assign(
-		{},
-		meta,
-		{
-			requestId,
-			status,
-		},
+	const dataLayer = Object.assign(
+		{ requestKey, status },
 		status !== 'pending' && { lastUpdated: Date.now() }
 	);
 
-	// update the meta
-	store.dispatch( {
-		type: 'DATA_REQUEST_TRACK',
-		key: actionKey,
-		requestInfo: nextMeta,
-	} );
+	const dispatch = response => store.dispatch( merge( response, { meta: { dataLayer } } ) );
 
-	// update the request mapping
-	// the returning action could be
-	// different than the first one
-	// which originated the request
-	if ( 'pending' === status ) {
-		store.dispatch( {
-			type: 'DATA_REQUEST_MAP_ID',
-			requestId,
-			key: actionKey,
-		} );
-	} else {
-		const firstKey = getRequestIds( store.getState(), requestId );
-
-		if ( firstKey && firstKey !== actionKey ) {
-			store.dispatch( {
-				type: 'DATA_REQUEST_TRACK',
-				key: firstKey,
-				requestInfo: nextMeta,
-			} );
-		}
-	}
-
-	next( store, merge( action, { meta: { dataLayer: { requestId } } } ) );
+	next( { ...store, dispatch }, merge( action, { meta: { dataLayer } } ) );
 };
 
 /**
