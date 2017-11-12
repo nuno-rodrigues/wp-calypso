@@ -165,7 +165,7 @@ export const trackRequests = next => ( store, action ) => {
 
 	const dispatch = response => store.dispatch( merge( response, { meta: { dataLayer } } ) );
 
-	next( { ...store, dispatch }, merge( action, { meta: { dataLayer } } ) );
+	next( { ...store, dispatch }, action );
 };
 
 /**
