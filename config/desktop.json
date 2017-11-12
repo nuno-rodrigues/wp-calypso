@@ -100,6 +100,7 @@
 		"upgrades/premium-themes": true,
 		"upgrades/presale-chat": true,
 		"upgrades/removal-survey": true,
+		"woocommerce/store-stats": false,
 		"wpcom-user-bootstrap": false
 	},
 	"readerFollowingSource": "desktop",

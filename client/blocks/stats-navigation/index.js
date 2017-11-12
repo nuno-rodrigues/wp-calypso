@@ -38,7 +38,7 @@ class StatsNavigation extends Component {
 			case 'activity':
 				return config.isEnabled( 'jetpack/activity-log' ) && isJetpack;
 			case 'store':
-				return isStore;
+				return config.isEnabled( 'woocommerce/store-stats' ) && isStore;
 			default:
 				return true;
 		}
@@ -49,6 +49,7 @@ class StatsNavigation extends Component {
 		const { label, showIntervals, path } = navItems[ selectedItem ];
 		const slugPath = slug ? `/${ slug }` : '';
 		const pathTemplate = `${ path }/{{ interval }}${ slugPath }`;
+
 		return (
 			<div className="stats-navigation">
 				<SectionNav selectedText={ label }>
