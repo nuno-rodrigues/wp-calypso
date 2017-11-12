@@ -133,6 +133,7 @@ export const reducer = combineReducers( {
 
 export const isRequestLoading = ( state, action ) =>
 	getRequests( state, getActionKey( action ) ).status === 'pending';
+
 export const hasRequestLoaded = ( state, action ) =>
 	getRequests( state, getActionKey( action ) ).lastUpdated > -Infinity;
 
@@ -320,32 +321,34 @@ export const dispatchRequest = ( initiator, onSuccess, onError, options = {} ) =
  *   fromApi    :: ResponseData -> TransformedData throws TransformerError|SchemaError
  *
  * @param {Object} options object with named parameters:
- * @param {Function} fetch called if action lacks response meta; should create HTTP request
- * @param {Function} onSuccess called if the action meta includes response data
- * @param {Function} onError called if the action meta includes error data
- * @param {Function} onProgress called on progress events when uploading
- * @param {Function} fromApi maps between API data and Calypso data
+ * @param {Function} options.fetch called if action lacks response meta; should create HTTP request
+ * @param {Function} options.onSuccess called if the action meta includes response data
+ * @param {Function} options.onError called if the action meta includes error data
+ * @param {Function} options.onProgress called on progress events when uploading
+ * @param {Function} options.fromApi maps between API data and Calypso data
  * @returns {Action} action or action thunk to be executed in response to HTTP event
  */
 export const dispatchRequestEx = options => {
-	if ( ! options.fetch ) {
+	const { fetch, middleware, onError, onSuccess } = { ...defaultOptions, ...options };
+
+	if ( ! fetch ) {
 		warn( 'fetch handler is not defined: no request will ever be issued' );
 	}
 
-	if ( ! options.onSuccess ) {
+	if ( ! onSuccess ) {
 		warn( 'onSuccess handler is not defined: response to the request is being ignored' );
 	}
 
-	if ( ! options.onError ) {
+	if ( ! onError ) {
 		warn( 'onError handler is not defined: error during the request is being ignored' );
 	}
 
-	return ( store, action ) => {
+	return middleware( ( store, action ) => {
 		// create the low-level action we want to dispatch
 		const requestAction = createRequestAction( options, action );
 		// dispatch the low level action (if any was created) and return the result
-		return requestAction ? store.dispatch( requestAction ) : undefined;
-	};
+		return requestAction ? [].concat( requestAction ).forEach( store.dispatch ) : undefined;
+	} );
 };
 
 /*
