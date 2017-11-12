@@ -108,14 +108,14 @@ const getRequestStatus = action => {
 	return 'pending';
 };
 
-export const getActionKey = fullAction => {
+export const getRequestKey = fullAction => {
 	const { meta, ...action } = fullAction; // eslint-disable-line no-unused-vars
 	const requestKey = get( meta, 'dataLayer.requestKey' );
 
 	return requestKey ? requestKey : deterministicStringify( action );
 };
 
-export const getRequests = ( state, key ) => state.dataRequests[ key ] || {};
+export const getRequest = ( state, key ) => state.dataRequests[ key ] || {};
 
 export const requestsReducerItem = (
 	state = null,
@@ -125,10 +125,10 @@ export const requestsReducerItem = (
 export const reducer = keyedReducer( 'meta.dataLayer.requestKey', requestsReducerItem );
 
 export const isRequestLoading = ( state, action ) =>
-	getRequests( state, getActionKey( action ) ).status === 'pending';
+	getRequest( state, getRequestKey( action ) ).status === 'pending';
 
 export const hasRequestLoaded = ( state, action ) =>
-	getRequests( state, getActionKey( action ) ).lastUpdated > -Infinity;
+	getRequest( state, getRequestKey( action ) ).lastUpdated > -Infinity;
 
 /**
  * Tracks the state of network activity for a given request type
@@ -156,7 +156,7 @@ export const trackRequests = next => ( store, action ) => {
 		return next( store, action );
 	}
 
-	const requestKey = getActionKey( action );
+	const requestKey = getRequestKey( action );
 	const status = getRequestStatus( action );
 	const dataLayer = Object.assign(
 		{ requestKey, status },
