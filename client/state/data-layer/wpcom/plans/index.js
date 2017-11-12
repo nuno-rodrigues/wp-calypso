@@ -55,7 +55,7 @@ export const receiveError = ( action, rawError ) =>
 export const dispatchPlansRequest = dispatchRequestEx( {
 	fetch: requestPlans,
 	onSuccess: receivePlans,
-	onFailure: receiveError,
+	onError: receiveError,
 } );
 
 export default {

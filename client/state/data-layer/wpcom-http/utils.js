@@ -119,8 +119,8 @@ export const getRequest = ( state, key ) => state.dataRequests[ key ] || {};
 
 export const requestsReducerItem = (
 	state = null,
-	{ meta: { dataLayer: { lastUpdated, status } = {} } = {} }
-) => Object.assign( { status }, lastUpdated && { lastUpdated } );
+	{ meta: { dataLayer: { lastUpdated, pendingSince, status } = {} } = {} }
+) => Object.assign( { status }, lastUpdated && { lastUpdated }, pendingSince && { pendingSince } );
 
 export const reducer = keyedReducer( 'meta.dataLayer.requestKey', requestsReducerItem );
 
@@ -160,7 +160,7 @@ export const trackRequests = next => ( store, action ) => {
 	const status = getRequestStatus( action );
 	const dataLayer = Object.assign(
 		{ requestKey, status },
-		status !== 'pending' && { lastUpdated: Date.now() }
+		status === 'pending' ? { pendingSince: Date.now() } : { lastUpdated: Date.now() }
 	);
 
 	const dispatch = response => store.dispatch( merge( response, { meta: { dataLayer } } ) );
