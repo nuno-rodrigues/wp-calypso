@@ -160,7 +160,7 @@ const getActivityDescription = item => {
 			return [
 				'Threat found',
 				`(${ object.signature }) found in file `,
-				[ 'filepath', null, object.file ],
+				[ 'filepath', {}, object.file ],
 			];
 
 		case 'theme__installed':

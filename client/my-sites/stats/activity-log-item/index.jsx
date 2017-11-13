@@ -18,18 +18,6 @@ import EllipsisMenu from 'components/ellipsis-menu';
 import FoldableCard from 'components/foldable-card';
 import PopoverMenuItem from 'components/popover/menu-item';
 
-/**
- * Y-combinator: just the Y combinator
- *
- * Used to build anonymous recursive functions
- *
- * @see http://blog.klipse.tech/lambda/2016/08/10/pure-y-combinator-javascript.html
- *
- * @param {Function} f recursive candidate function
- * @returns {Function} self-recusrive function
- */
-const Y = f => ( x => x( x ) )( x => f( y => x( x )( y ) ) );
-
 const stopPropagation = event => event.stopPropagation();
 
 class ActivityLogItem extends Component {
@@ -109,74 +97,69 @@ class ActivityLogItem extends Component {
 					{ ...pick( log, [ 'actorAvatarUrl', 'actorName', 'actorRole', 'actorType' ] ) }
 				/>
 				<div className="activity-log-item__description">
-					{ Y( recurse => nodes => {
-						if ( 'string' === typeof nodes ) {
-							return nodes;
+					{ description.map( ( part, key ) => {
+						if ( 'string' === typeof part ) {
+							return part;
 						}
 
-						return nodes.map( ( part, key ) => {
-							if ( 'string' === typeof part ) {
-								return part;
-							}
+						const [ type, attrs = {}, children ] = part;
+						const { blogId, postId, commentId, name } = attrs;
 
-							const [ type, attrs, children ] = part;
+						switch ( type ) {
+							case 'comment':
+								return (
+									<a
+										key={ key }
+										href={ `/read/blogs/${ blogId }/posts/${ postId }#comment-${ commentId }` }
+									>
+										{ children }
+									</a>
+								);
 
-							switch ( type ) {
-								case 'comment':
-									return (
-										<a
-											key={ key }
-											href={ `/read/blogs/${ attrs.blogId }/posts/${ attrs.postId }#comment-${ attrs.commentId }` }
-										>
-											{ recurse( children ) }
-										</a>
-									);
+							case 'filepath':
+								return (
+									<div>
+										<code>{ children }</code>
+									</div>
+								);
 
-								case 'filepath':
-									return (
-										<div>
-											<code>{ recurse( children ) }</code>
-										</div>
-									);
+							case 'person':
+								return (
+									<a key={ key } href={ `/people/edit/${ blogId }/${ name }` }>
+										<strong>{ children }</strong>
+									</a>
+								);
 
-								case 'person':
-									return (
-										<a key={ key } href={ `/people/edit/${ attrs.blogId }/${ attrs.name }` }>
-											<strong>{ recurse( children ) }</strong>
-										</a>
-									);
+							case 'plugin':
+								return (
+									<a key={ key } href={ `/plugins/${ name }/${ blogId }` }>
+										{ children }
+									</a>
+								);
 
-								case 'plugin':
-									return (
-										<a key={ key } href={ `/plugins/${ attrs.name }/${ attrs.blogId }` }>
-											{ recurse( children ) }
-										</a>
-									);
+							case 'post':
+								return (
+									<a key={ key } href={ `/read/blogs/${ blogId }/posts/${ postId }` }>
+										<em>{ children }</em>
+									</a>
+								);
 
-								case 'post':
-									return (
-										<a key={ key } href={ `/read/blogs/${ attrs.blogId }/posts/${ attrs.postId }` }>
-											<em>{ recurse( children ) }</em>
-										</a>
-									);
+							case 'theme':
+								return (
+									<a key={ key } href={ attrs.url } target="_blank" rel="noopener noreferrer">
+										<strong>
+											<em>{ children }</em>
+										</strong>
+									</a>
+								);
 
-								case 'theme':
-									return (
-										<a key={ key } href={ attrs.url } target="_blank" rel="noopener noreferrer">
-											<strong>
-												<em>{ recurse( children ) }</em>
-											</strong>
-										</a>
-									);
+							case 'time':
+								return applySiteOffset( moment.utc( attrs.time ) ).format( attrs.format );
 
-								case 'time':
-									return applySiteOffset( moment.utc( attrs.time ) ).format( attrs.format );
-
-								default:
-									return null;
-							}
-						} );
-					} )( description ) }
+							default:
+								return null;
+						}
+					} ) }
 					<div className="activity-log-item__event">{ eventName }</div>
 				</div>
 			</div>
