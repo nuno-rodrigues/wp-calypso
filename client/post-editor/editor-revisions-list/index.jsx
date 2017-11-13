@@ -26,6 +26,8 @@ class EditorRevisionsList extends PureComponent {
 		selectedRevisionId: PropTypes.number,
 	};
 
+	trySelectingTimeout = null;
+
 	trySelectingFirstRevision = () => {
 		const { revisions } = this.props;
 		if ( ! revisions.length ) {
@@ -39,8 +41,11 @@ class EditorRevisionsList extends PureComponent {
 	};
 
 	componentWillReceiveProps( { selectedRevisionId } ) {
-		if ( ! selectedRevisionId || ! this.props.selectedRevisionId ) {
-			setTimeout( this.trySelectingFirstRevision, 300 );
+		if (
+			! this.trySelectingTimeout &&
+			( ! selectedRevisionId || ! this.props.selectedRevisionId )
+		) {
+			this.trySelectingTimeout = setTimeout( this.trySelectingFirstRevision, 300 );
 		}
 	}
 
