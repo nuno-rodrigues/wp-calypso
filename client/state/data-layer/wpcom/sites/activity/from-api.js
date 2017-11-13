@@ -48,44 +48,45 @@ export function transformer( apiResponse ) {
 }
 
 const getActivityDescription = item => {
-	const { generator, items, object, target } = item;
+	const { generator = {}, items = [], object = {}, target = {} } = item;
+	const { blog_id: blogId } = generator;
+	const { name, object_version: version } = object;
+	const { post_id: postId } = target;
+
+	const makePart = ( type, data ) => text => [ type, data( item ), text ];
+
+	const comment = makePart( 'comment', () => ( { blogId, postId, commentId: object.object_id } ) );
+	const commentPost = makePart( 'post', () => ( { blogId, postId } ) );
+	const firstPlugin = makePart( 'plugin', () => ( { blogId, name: items[ 0 ].name } ) );
+	const person = makePart( 'person', () => ( { blogId, name } ) );
+	const plugin = makePart( 'plugin', () => ( { blogId, name } ) );
+	const post = makePart( 'post', () => ( { blogId, postId: object.object_id } ) );
+	const theme = makePart( 'theme', () => ( { url: object.id, name, version } ) );
 
 	switch ( item.name ) {
 		case 'comment__approved':
 			return [
 				'Comment approved',
 				'approved a ',
-				[
-					'comment',
-					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
-					'comment',
-				],
+				comment( 'comment' ),
 				` on ${ target.post_type } `,
-				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				commentPost( target.name ),
 			];
 
 		case 'comment__published':
 			return [
 				'Comment published',
-				[
-					'comment',
-					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
-					'commented',
-				],
+				comment( 'commented' ),
 				` on ${ target.post_type } `,
-				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				commentPost( target.name ),
 			];
 
 		case 'comment__published_awaiting_approval':
 			return [
 				'Comment awaiting approval',
-				[
-					'comment',
-					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
-					'commented',
-				],
+				comment( 'commented' ),
 				` on ${ target.post_type } `,
-				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				commentPost( target.name ),
 				' and it is awaiting approval',
 			];
 
@@ -93,26 +94,18 @@ const getActivityDescription = item => {
 			return [
 				'Comment spammed',
 				'marked ',
-				[
-					'comment',
-					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
-					'a comment',
-				],
+				comment( 'a comment' ),
 				` as spam on ${ target.post_type } `,
-				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				commentPost( target.name ),
 			];
 
 		case 'comment__trashed':
 			return [
 				'Comment trashed',
 				'trashed ',
-				[
-					'comment',
-					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
-					'a comment',
-				],
+				comment( 'a comment' ),
 				` on ${ target.post_type } `,
-				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				commentPost( target.name ),
 			];
 
 		case 'monitor__site_down':
@@ -122,50 +115,33 @@ const getActivityDescription = item => {
 			return [ 'Jetpack monitor', 'site is back online' ];
 
 		case 'post__published':
-			return [
-				'Post published',
-				[ 'post', { blogId: generator.blog_id, postId: object.object_id }, object.name ],
-			];
+			return [ 'Post published', post( name ) ];
 
 		case 'post__updated':
-			return [
-				'Post updated',
-				[ 'post', { blogId: generator.blog_id, postId: object.object_id }, object.name ],
-			];
+			return [ 'Post updated', post( name ) ];
 
 		case 'plugin__activated':
-			return [
-				'Plugin activated',
-				'activated plugin ',
-				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
-			];
+			return [ 'Plugin activated', 'activated plugin ', post( name ) ];
 
 		case 'plugin__autoupdated':
 			return [
 				'Plugin updated',
-				[ 'plugin', { blogId: generator.blog_id, name: items[ 0 ].name }, items[ 0 ].name ],
+				firstPlugin( items[ 0 ].name ),
 				` autoupdated to version ${ items[ 0 ].object_version }`,
 			];
 
 		case 'plugin__update_available':
 			return [
 				'Plugin update available',
-				[ 'plugin', { blogId: generator.blog_id, name: items[ 0 ].name }, items[ 0 ].name ],
+				firstPlugin( items[ 0 ].name ),
 				' plugin has an update available',
 			];
 
 		case 'plugin__deleted':
-			return [
-				'Plugin deleted',
-				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
-			];
+			return [ 'Plugin deleted', plugin( name ) ];
 
 		case 'plugin__installed':
-			return [
-				'Plugin installed',
-				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
-				` (${ object.object_version }) `,
-			];
+			return [ 'Plugin installed', plugin( name ), ` (${ version }) ` ];
 
 		case 'rewind__backup_complete_full':
 			return [ 'Full backup', 'successfully synced' ];
@@ -188,45 +164,19 @@ const getActivityDescription = item => {
 			];
 
 		case 'theme__installed':
-			return [
-				'Theme installed',
-				'installed theme ',
-				[
-					'theme',
-					{ url: object.id, name: object.name, version: object.object_version },
-					object.name,
-				],
-			];
+			return [ 'Theme installed', 'installed theme ', theme( name ) ];
 
 		case 'theme__switched':
-			return [
-				'Theme switched',
-				'switched theme to ',
-				[
-					'theme',
-					{ url: object.id, name: object.name, version: object.object_version },
-					object.name,
-				],
-			];
+			return [ 'Theme switched', 'switched theme to ', theme( name ) ];
 
 		case 'user__deleted':
-			return [
-				'User removed',
-				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
-			];
+			return [ 'User removed', person( name ) ];
 
 		case 'user__registered':
-			return [
-				'User added',
-				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
-			];
+			return [ 'User added', person( name ) ];
 
 		case 'user__updated':
-			return [
-				'User modified',
-				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
-				' is now an Administrator ',
-			];
+			return [ 'User modified', person( name ), ' is now an Administrator ' ];
 
 		default:
 			return [ item.name, item.summary ];
