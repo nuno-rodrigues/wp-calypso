@@ -17,6 +17,25 @@ export const DEFAULT_GRAVATAR_URL = 'https://www.gravatar.com/avatar/0';
 export const DEFAULT_GRIDICON = 'info-outline';
 
 /**
+ * Normalize timestamp values
+ *
+ * Some timestamps are in seconds instead
+ * of in milliseconds and this will make
+ * sure they are all reported in ms
+ *
+ * The chosen comparison date is older than
+ * WordPress so no backups should already
+ * exist prior to that date 😉
+ *
+ * @param {Number} ts timestamp in 's' or 'ms'
+ * @returns {Number} timestamp in 'ms'
+ */
+const ms = ts =>
+	ts < 946702800000 // Jan 1, 2001 @ 00:00:00
+		? ts * 1000 // convert s -> ms
+		: ts;
+
+/**
  * Transforms API response into array of activities
  *
  * @param  {object} apiResponse                      API response body
@@ -29,51 +48,188 @@ export function transformer( apiResponse ) {
 }
 
 const getActivityDescription = item => {
-	const { generator, object } = item;
+	const { generator, items, object, target } = item;
 
 	switch ( item.name ) {
+		case 'comment__approved':
+			return [
+				'Comment approved',
+				'approved a ',
+				[
+					'comment',
+					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
+					'comment',
+				],
+				` on ${ target.post_type } `,
+				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+			];
+
+		case 'comment__published':
+			return [
+				'Comment published',
+				[
+					'comment',
+					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
+					'commented',
+				],
+				` on ${ target.post_type } `,
+				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+			];
+
+		case 'comment__published_awaiting_approval':
+			return [
+				'Comment awaiting approval',
+				[
+					'comment',
+					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
+					'commented',
+				],
+				` on ${ target.post_type } `,
+				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+				' and it is awaiting approval',
+			];
+
+		case 'comment__spammed':
+			return [
+				'Comment spammed',
+				'marked ',
+				[
+					'comment',
+					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
+					'a comment',
+				],
+				` as spam on ${ target.post_type } `,
+				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+			];
+
+		case 'comment__trashed':
+			return [
+				'Comment trashed',
+				'trashed ',
+				[
+					'comment',
+					{ blogId: generator.blog_id, postId: target.post_id, commentId: object.object_id },
+					'a comment',
+				],
+				` on ${ target.post_type } `,
+				[ 'post', { blogId: generator.blog_id, postId: target.post_id }, target.name ],
+			];
+
+		case 'monitor__site_down':
+			return [ 'Jetpack monitor', 'site unreachable' ];
+
+		case 'monitor__site_up':
+			return [ 'Jetpack monitor', 'site is back online' ];
+
 		case 'post__published':
-			return (
-				`<a href="/read/blogs/${ generator.blog_id }/posts/` +
-				`${ object.object_id }">${ object.name }</a>` +
-				'<div class="activity-log-item__event">Post published</div>'
-			);
+			return [
+				'Post published',
+				[ 'post', { blogId: generator.blog_id, postId: object.object_id }, object.name ],
+			];
+
+		case 'post__updated':
+			return [
+				'Post updated',
+				[ 'post', { blogId: generator.blog_id, postId: object.object_id }, object.name ],
+			];
+
+		case 'plugin__activated':
+			return [
+				'Plugin activated',
+				'activated plugin ',
+				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
+			];
+
+		case 'plugin__autoupdated':
+			return [
+				'Plugin updated',
+				[ 'plugin', { blogId: generator.blog_id, name: items[ 0 ].name }, items[ 0 ].name ],
+				` autoupdated to version ${ items[ 0 ].object_version }`,
+			];
+
+		case 'plugin__update_available':
+			return [
+				'Plugin update available',
+				[ 'plugin', { blogId: generator.blog_id, name: items[ 0 ].name }, items[ 0 ].name ],
+				' plugin has an update available',
+			];
 
 		case 'plugin__deleted':
-			return (
-				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a>` +
-				'<div class="activity-log-item__event">Plugin deleted</div>'
-			);
+			return [
+				'Plugin deleted',
+				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
+			];
 
 		case 'plugin__installed':
-			return (
-				`<a href="/plugins/${ object.name }/${ generator.blog_id }">${ object.name }</a> (${ object.object_version })` +
-				'<div class="activity-log-item__event">Plugin installed</div>'
-			);
+			return [
+				'Plugin installed',
+				[ 'plugin', { blogId: generator.blog_id, name: object.name }, object.name ],
+				` (${ object.object_version }) `,
+			];
+
+		case 'rewind__backup_complete_full':
+			return [ 'Full backup', 'successfully synced' ];
+
+		case 'rewind__complete':
+			return [
+				'Site restore',
+				'successfully restored to ',
+				[ 'time', { format: 'LLL', time: ms( object.target_ts ) }, [] ],
+			];
+
+		case 'rewind__error':
+			return [ 'Site restore', 'failed to restore' ];
+
+		case 'rewind__scan_result_found':
+			return [
+				'Threat found',
+				`(${ object.signature }) found in file `,
+				[ 'filepath', null, object.file ],
+			];
+
+		case 'theme__installed':
+			return [
+				'Theme installed',
+				'installed theme ',
+				[
+					'theme',
+					{ url: object.id, name: object.name, version: object.object_version },
+					object.name,
+				],
+			];
+
+		case 'theme__switched':
+			return [
+				'Theme switched',
+				'switched theme to ',
+				[
+					'theme',
+					{ url: object.id, name: object.name, version: object.object_version },
+					object.name,
+				],
+			];
 
 		case 'user__deleted':
-			return (
-				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a>` +
-				'<div class="activity-log-item__event">User removed</div>'
-			);
+			return [
+				'User removed',
+				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
+			];
 
 		case 'user__registered':
-			return (
-				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a>` +
-				'<div class="activity-log-item__event">User added</div>'
-			);
+			return [
+				'User added',
+				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
+			];
 
 		case 'user__updated':
-			return (
-				`<a href="/people/edit/${ generator.blog_id }/${ object.name }">` +
-				`${ object.name }</a> is now an Administrator` +
-				'<div class="activity-log-item__event">User modified</div>'
-			);
+			return [
+				'User modified',
+				[ 'person', { blogId: generator.blog_id, name: object.name }, object.name ],
+				' is now an Administrator ',
+			];
 
 		default:
-			return item.summary || '';
+			return [ item.name, item.summary ];
 	}
 };
 
