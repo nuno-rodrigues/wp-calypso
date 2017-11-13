@@ -1,9 +1,7 @@
+/** @format */
 /**
  * External Dependencies
- *
- * @format
  */
-
 import config from 'config';
 import page from 'page';
 
@@ -12,7 +10,7 @@ import page from 'page';
  */
 import billingController from 'me/billing-history/controller';
 import meController from 'me/controller';
-import sitesController from 'my-sites/controller';
+import { siteSelection } from 'my-sites/controller';
 import controller from './controller';
 import paths from './paths';
 
@@ -34,7 +32,7 @@ export default function() {
 		paths.managePurchase(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.managePurchase
 	);
 
@@ -42,7 +40,7 @@ export default function() {
 		paths.cancelPurchase(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.cancelPurchase
 	);
 
@@ -50,7 +48,7 @@ export default function() {
 		paths.cancelPrivacyProtection(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.cancelPrivacyProtection
 	);
 
@@ -58,7 +56,7 @@ export default function() {
 		paths.confirmCancelDomain(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.confirmCancelDomain
 	);
 
@@ -66,7 +64,7 @@ export default function() {
 		paths.addCardDetails(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.addCardDetails
 	);
 
@@ -74,7 +72,7 @@ export default function() {
 		paths.editCardDetails(),
 		meController.sidebar,
 		controller.noSitesMessage,
-		sitesController.siteSelection,
+		siteSelection,
 		controller.editCardDetails
 	);
 
